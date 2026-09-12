@@ -1,0 +1,304 @@
+/* ========================================
+   REGISTER PAGE
+======================================== */
+
+.register-page {
+    min-height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 40px 20px;
+
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+
+    background:
+        radial-gradient(
+            circle at 90% 10%,
+            rgba(117, 156, 137, 0.15),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #edf5f0,
+            #ffffff
+        );
+}
+
+
+/* Register card */
+
+.register-card {
+    width: 100%;
+    max-width: 460px;
+
+    padding: 40px;
+
+    background: #ffffff;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 25px 70px rgba(36, 72, 63, 0.12);
+}
+
+
+/* Logo */
+
+.register-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-bottom: 20px;
+
+    color: #24483f;
+
+    font-size: 25px;
+    font-weight: 800;
+}
+
+.register-logo-icon {
+    font-size: 29px;
+}
+
+
+/* Heading */
+
+.register-card h1 {
+    margin: 0 0 9px;
+
+    text-align: center;
+
+    color: #203b34;
+
+    font-size: 29px;
+}
+
+.register-subtitle {
+    margin: 0 0 28px;
+
+    text-align: center;
+
+    color: #7b8581;
+
+    font-size: 13px;
+
+    line-height: 1.7;
+}
+
+
+/* Form */
+
+.register-form-group {
+    margin-bottom: 16px;
+}
+
+.register-form-group label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #34453f;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.register-form-group input {
+    width: 100%;
+
+    padding: 13px 14px;
+
+    border: 1px solid #dce3df;
+
+    border-radius: 9px;
+
+    outline: none;
+
+    color: #333;
+
+    font-size: 14px;
+
+    transition: 0.3s;
+}
+
+.register-form-group input:focus {
+    border-color: #759c89;
+
+    box-shadow:
+        0 0 0 3px rgba(117, 156, 137, 0.12);
+}
+
+
+/* Register button */
+
+.register-submit {
+    width: 100%;
+
+    margin-top: 5px;
+
+    padding: 14px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #24483f;
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.register-submit:hover {
+    background: #18372f;
+
+    transform: translateY(-1px);
+}
+
+
+/* Login switch */
+
+.register-switch {
+    margin: 23px 0 0;
+
+    text-align: center;
+
+    color: #7b8581;
+
+    font-size: 13px;
+}
+
+.register-switch a {
+    color: #24483f;
+
+    font-weight: 700;
+}
+
+
+/* Back home */
+
+.register-back-home {
+    display: block;
+
+    margin-top: 17px;
+
+    text-align: center;
+
+    color: #688f7f;
+
+    font-size: 13px;
+}
+
+.register-back-home:hover {
+    color: #24483f;
+}
+
+
+/* Responsive */
+
+@media (max-width: 500px) {
+
+    .register-page {
+        padding: 25px 15px;
+    }
+
+    .register-card {
+        padding: 30px 22px;
+    }
+
+    .register-card h1 {
+        font-size: 26px;
+    }
+}
+
+/* ========================================
+   PASSWORD FIELD
+======================================== */
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 48px;
+}
+
+.password-eye {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+
+    width: 30px;
+    height: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+    border: none;
+    background: transparent;
+
+    cursor: pointer;
+
+    font-size: 17px;
+
+    opacity: 0.65;
+
+    transition: 0.2s;
+}
+
+.password-eye:hover {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.08);
+}
+
+
+/* ========================================
+   SUCCESS MESSAGE
+======================================== */
+
+.success-message {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+
+    border: 1px solid #c8e6d2;
+    border-radius: 8px;
+
+    background: #edf8f1;
+    color: #32734a;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* ========================================
+   ERROR MESSAGE
+======================================== */
+
+.error-message {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+
+    border: 1px solid #f0caca;
+    border-radius: 8px;
+
+    background: #fff1f1;
+    color: #b33a3a;
+
+    font-size: 13px;
+    font-weight: 600;
+}

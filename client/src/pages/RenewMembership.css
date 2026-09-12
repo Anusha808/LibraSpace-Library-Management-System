@@ -1,0 +1,1046 @@
+* {
+    box-sizing: border-box;
+}
+
+.renew-page {
+    min-height: 100vh;
+
+    display: flex;
+
+    background: #f5f7f6;
+
+    color: #263f38;
+
+    font-family:
+        "Inter",
+        "Segoe UI",
+        Arial,
+        sans-serif;
+}
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.renew-sidebar {
+    position: fixed;
+
+    left: 0;
+    top: 0;
+
+    width: 245px;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 28px 17px;
+
+    background: #ffffff;
+
+    border-right: 1px solid #e4ebe7;
+
+    z-index: 100;
+}
+
+.renew-sidebar-logo {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 5px 10px 30px;
+}
+
+.renew-logo-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: #24483f;
+
+    font-size: 20px;
+}
+
+.renew-sidebar-logo div:last-child {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.renew-sidebar-logo strong {
+    color: #24483f;
+
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.renew-sidebar-logo span {
+    color: #9aa49f;
+
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.renew-menu-title {
+    padding: 18px 12px 9px;
+
+    color: #a1aaa6;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 1.3px;
+}
+
+.renew-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.renew-sidebar-nav a {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 12px 13px;
+
+    border-radius: 9px;
+
+    color: #77847e;
+
+    text-decoration: none;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    transition: .25s;
+}
+
+.renew-sidebar-nav a:hover {
+    background: #f1f6f3;
+
+    color: #24483f;
+}
+
+.renew-sidebar-nav a span {
+    width: 22px;
+
+    text-align: center;
+
+    font-size: 15px;
+}
+
+.renew-sidebar-bottom {
+    margin-top: auto;
+}
+
+.renew-library-status {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 14px;
+
+    border-radius: 10px;
+
+    background: #f6f9f7;
+
+    border: 1px solid #e7eeea;
+}
+
+.renew-status-dot {
+    width: 8px;
+    height: 8px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #52a36c;
+
+    box-shadow: 0 0 0 4px #e7f5eb;
+}
+
+.renew-library-status div {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.renew-library-status strong {
+    color: #42564e;
+
+    font-size: 10px;
+}
+
+.renew-library-status small {
+    color: #99a39e;
+
+    font-size: 8px;
+}
+
+.renew-logout {
+    display: block;
+
+    margin-top: 12px;
+
+    padding: 11px 13px;
+
+    border-radius: 8px;
+
+    color: #8a9691;
+
+    text-decoration: none;
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.renew-logout:hover {
+    background: #f4f7f5;
+
+    color: #24483f;
+}
+
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.renew-content {
+    width: calc(100% - 245px);
+
+    margin-left: 245px;
+
+    min-height: 100vh;
+}
+
+
+/* =====================================================
+   TOPBAR
+===================================================== */
+
+.renew-topbar {
+    height: 82px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 42px;
+
+    background: #ffffff;
+
+    border-bottom: 1px solid #e6ece9;
+}
+
+.renew-top-label {
+    color: #87a295;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 1.4px;
+}
+
+.renew-topbar h1 {
+    margin: 4px 0 0;
+
+    color: #263f38;
+
+    font-size: 19px;
+    font-weight: 750;
+}
+
+.renew-user {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    color: inherit;
+
+    text-decoration: none;
+}
+
+.renew-user-avatar {
+    width: 37px;
+    height: 37px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #24483f;
+
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.renew-user-info {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.renew-user-info strong {
+    color: #40524b;
+
+    font-size: 11px;
+}
+
+.renew-user-info span {
+    color: #9aa39f;
+
+    font-size: 9px;
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.renew-main {
+    max-width: 1370px;
+
+    margin: auto;
+
+    padding: 30px 42px 55px;
+}
+
+
+/* =====================================================
+   BREADCRUMB
+===================================================== */
+
+.renew-breadcrumb {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 25px;
+
+    font-size: 9px;
+}
+
+.renew-breadcrumb a {
+    color: #789187;
+
+    text-decoration: none;
+}
+
+.renew-breadcrumb span {
+    color: #bdc5c1;
+}
+
+.renew-breadcrumb strong {
+    color: #465b53;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.renew-page-header {
+    margin-bottom: 25px;
+}
+
+.renew-page-header > div > span {
+    color: #87a295;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 1.4px;
+}
+
+.renew-page-header h2 {
+    margin: 7px 0 6px;
+
+    color: #263f38;
+
+    font-size: 27px;
+    font-weight: 800;
+}
+
+.renew-page-header p {
+    margin: 0;
+
+    color: #8b9691;
+
+    font-size: 11px;
+}
+
+
+/* =====================================================
+   LAYOUT
+===================================================== */
+
+.renew-layout {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.4fr)
+        minmax(300px, .75fr);
+
+    gap: 20px;
+
+    align-items: start;
+}
+
+
+/* =====================================================
+   PLAN CARD
+===================================================== */
+
+.renew-plans-card {
+    padding: 25px;
+
+    border-radius: 14px;
+
+    background: #ffffff;
+
+    border: 1px solid #e4ebe7;
+}
+
+.renew-card-heading {
+    margin-bottom: 18px;
+}
+
+.renew-card-heading span {
+    color: #87a295;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 1.3px;
+}
+
+.renew-card-heading h3 {
+    margin: 6px 0 0;
+
+    color: #3d534a;
+
+    font-size: 17px;
+}
+
+
+/* =====================================================
+   PLAN OPTIONS
+===================================================== */
+
+.renew-plan {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    margin-bottom: 11px;
+
+    padding: 17px;
+
+    border: 1px solid #e4ebe7;
+
+    border-radius: 11px;
+
+    background: #ffffff;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+.renew-plan:hover {
+    border-color: #aabfb5;
+
+    background: #fbfdfc;
+}
+
+.renew-plan.selected {
+    border-color: #24483f;
+
+    background: #f1f7f3;
+
+    box-shadow:
+        0 0 0 1px rgba(36,72,63,.05);
+}
+
+.renew-radio {
+    width: 19px;
+    height: 19px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid #b9c5bf;
+
+    border-radius: 50%;
+}
+
+.renew-plan.selected .renew-radio {
+    border-color: #24483f;
+}
+
+.renew-radio span {
+    width: 9px;
+    height: 9px;
+
+    border-radius: 50%;
+
+    background: #24483f;
+}
+
+.renew-plan-info {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.renew-plan-info strong {
+    color: #42584f;
+
+    font-size: 11px;
+}
+
+.renew-plan-info span {
+    color: #939e99;
+
+    font-size: 8px;
+}
+
+.renew-plan-price {
+    margin-left: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    gap: 3px;
+}
+
+.renew-plan-price strong {
+    color: #294a40;
+
+    font-size: 15px;
+}
+
+.renew-plan-price span {
+    color: #99a39f;
+
+    font-size: 8px;
+}
+
+
+/* =====================================================
+   BENEFITS
+===================================================== */
+
+.renew-benefits {
+    margin-top: 23px;
+
+    padding-top: 21px;
+
+    border-top: 1px solid #e9eeeb;
+}
+
+.renew-benefits > span {
+    color: #8b9992;
+
+    font-size: 7px;
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+}
+
+.renew-benefits > div {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 12px;
+}
+
+.renew-benefits p {
+    margin: 0;
+
+    color: #66766f;
+
+    font-size: 9px;
+}
+
+
+/* =====================================================
+   SUMMARY
+===================================================== */
+
+.renew-summary-card {
+    padding: 25px;
+
+    border-radius: 14px;
+
+    background: #ffffff;
+
+    border: 1px solid #e4ebe7;
+
+    box-shadow:
+        0 10px 25px rgba(36,72,63,.04);
+}
+
+.renew-summary-header span {
+    color: #87a295;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 1.3px;
+}
+
+.renew-summary-header h3 {
+    margin: 6px 0 20px;
+
+    color: #3d534a;
+
+    font-size: 17px;
+}
+
+
+/* MEMBERSHIP */
+
+.renew-summary-membership {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 14px;
+
+    border-radius: 10px;
+
+    background: #f4f8f5;
+}
+
+.renew-summary-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: #e4eee8;
+
+    font-size: 17px;
+}
+
+.renew-summary-membership div:last-child {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.renew-summary-membership strong {
+    color: #42584f;
+
+    font-size: 10px;
+}
+
+.renew-summary-membership span {
+    color: #8f9a95;
+
+    font-size: 8px;
+}
+
+
+/* DETAILS */
+
+.renew-summary-details {
+    display: flex;
+    flex-direction: column;
+
+    gap: 15px;
+
+    margin-top: 21px;
+}
+
+.renew-summary-details div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.renew-summary-details span {
+    color: #919b96;
+
+    font-size: 9px;
+}
+
+.renew-summary-details strong {
+    color: #52665e;
+
+    font-size: 9px;
+}
+
+.renew-summary-divider {
+    height: 1px;
+
+    margin: 20px 0;
+
+    background: #e8edeb;
+}
+
+
+/* TOTAL */
+
+.renew-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 18px;
+}
+
+.renew-total span {
+    color: #6d7d76;
+
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.renew-total strong {
+    color: #24483f;
+
+    font-size: 22px;
+    font-weight: 800;
+}
+
+
+/* PAYMENT BUTTON */
+
+.renew-payment-button {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 13px 15px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #24483f;
+
+    color: #ffffff;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: .25s;
+}
+
+.renew-payment-button:hover {
+    background: #18372f;
+
+    transform: translateY(-2px);
+}
+
+.renew-payment-button span {
+    font-size: 14px;
+}
+
+
+/* BACK */
+
+.renew-cancel {
+    display: block;
+
+    margin-top: 13px;
+
+    color: #82908a;
+
+    text-align: center;
+
+    text-decoration: none;
+
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.renew-cancel:hover {
+    color: #24483f;
+}
+
+
+/* SECURE */
+
+.renew-secure {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    margin-top: 20px;
+}
+
+.renew-secure span {
+    font-size: 10px;
+}
+
+.renew-secure p {
+    margin: 0;
+
+    color: #a0aaa5;
+
+    font-size: 7px;
+}
+
+
+/* =====================================================
+   NOTICE
+===================================================== */
+
+.renew-notice {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 12px;
+
+    margin-top: 20px;
+
+    padding: 17px 19px;
+
+    border-radius: 11px;
+
+    background: #f6f9f7;
+
+    border: 1px solid #e5ede8;
+}
+
+.renew-notice-icon {
+    width: 32px;
+    height: 32px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: #e8f2ec;
+
+    font-size: 14px;
+}
+
+.renew-notice div:last-child {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+.renew-notice strong {
+    color: #50665c;
+
+    font-size: 10px;
+}
+
+.renew-notice p {
+    margin: 0;
+
+    color: #8d9893;
+
+    font-size: 8px;
+
+    line-height: 1.6;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.renew-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 21px 42px;
+
+    background: #ffffff;
+
+    border-top: 1px solid #e5ebe8;
+}
+
+.renew-footer div {
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+}
+
+.renew-footer strong {
+    color: #315247;
+
+    font-size: 11px;
+}
+
+.renew-footer span {
+    color: #9aa39f;
+
+    font-size: 8px;
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 1050px) {
+
+    .renew-sidebar {
+        width: 210px;
+    }
+
+    .renew-content {
+        width: calc(100% - 210px);
+
+        margin-left: 210px;
+    }
+
+    .renew-main {
+        padding-left: 25px;
+        padding-right: 25px;
+    }
+
+    .renew-layout {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* =====================================================
+   SMALL TABLET
+===================================================== */
+
+@media (max-width: 850px) {
+
+    .renew-sidebar {
+        display: none;
+    }
+
+    .renew-content {
+        width: 100%;
+
+        margin-left: 0;
+    }
+
+    .renew-topbar {
+        padding: 0 22px;
+    }
+
+    .renew-main {
+        padding: 25px 22px 45px;
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+
+    .renew-topbar {
+        height: 70px;
+    }
+
+    .renew-user-info {
+        display: none;
+    }
+
+    .renew-main {
+        padding: 20px 15px 40px;
+    }
+
+    .renew-page-header h2 {
+        font-size: 22px;
+    }
+
+    .renew-plans-card,
+    .renew-summary-card {
+        padding: 19px;
+    }
+
+    .renew-plan {
+        padding: 14px;
+    }
+
+    .renew-plan-price strong {
+        font-size: 13px;
+    }
+
+    .renew-benefits > div {
+        grid-template-columns: 1fr;
+    }
+
+    .renew-footer {
+        flex-direction: column;
+
+        gap: 8px;
+
+        padding: 20px;
+
+        text-align: center;
+    }
+
+    .renew-footer div {
+        flex-direction: column;
+
+        gap: 5px;
+    }
+
+}
