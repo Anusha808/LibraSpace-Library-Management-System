@@ -18,6 +18,36 @@ function Register() {
 
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+
+    /* =====================================================
+       MOUSE FOLLOWING EFFECT
+       ===================================================== */
+
+    const handleMouseMove = (e) => {
+
+        const x =
+            (e.clientX / window.innerWidth) * 100;
+
+        const y =
+            (e.clientY / window.innerHeight) * 100;
+
+        document.documentElement.style.setProperty(
+            "--mouse-x",
+            `${x}%`
+        );
+
+        document.documentElement.style.setProperty(
+            "--mouse-y",
+            `${y}%`
+        );
+    };
+
+
+    /* =====================================================
+       HANDLE INPUT CHANGE
+       ===================================================== */
 
     const handleChange = (e) => {
 
@@ -33,7 +63,11 @@ function Register() {
     };
 
 
-    const handleSubmit = (e) => {
+    /* =====================================================
+       HANDLE REGISTER
+       ===================================================== */
+
+    const handleSubmit = async (e) => {
 
         e.preventDefault();
 
@@ -41,60 +75,176 @@ function Register() {
         setMessage("");
 
 
-        // Check password
-        if (formData.password !== formData.confirmPassword) {
+        /* =================================================
+           CHECK PASSWORD MATCH
+           ================================================= */
 
-            setError("Passwords do not match.");
+        if (
+            formData.password !==
+            formData.confirmPassword
+        ) {
+
+            setError(
+                "Passwords do not match."
+            );
 
             return;
         }
 
 
-        // Check password length
-        if (formData.password.length < 6) {
+        /* =================================================
+           CHECK PASSWORD LENGTH
+           ================================================= */
 
-            setError("Password must contain at least 6 characters.");
+        if (
+            formData.password.length < 6
+        ) {
+
+            setError(
+                "Password must contain at least 6 characters."
+            );
 
             return;
         }
 
 
-        // Registration successful
-        setMessage("Registration successful! Redirecting to login...");
+        setLoading(true);
 
 
-        // Temporary frontend registration
-        // Backend/MongoDB will be connected later
-        localStorage.setItem(
-            "libraryUser",
-            JSON.stringify({
-                fullName: formData.fullName,
-                email: formData.email
-            })
-        );
+        try {
+
+            /* =================================================
+               SEND DATA TO BACKEND
+               ================================================= */
+
+            const response = await fetch(
+                "http://localhost:5000/api/auth/register",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        name: formData.fullName,
+                        email: formData.email,
+                        password: formData.password,
+                        phone: ""
+                    })
+                }
+            );
 
 
-        // Navigate to login page after 1.5 seconds
-        setTimeout(() => {
+            const data =
+                await response.json();
 
-            navigate("/login");
 
-        }, 1500);
+            /* =================================================
+               BACKEND ERROR
+               ================================================= */
+
+            if (!response.ok) {
+
+                setError(
+                    data.message ||
+                    "Registration failed. Please try again."
+                );
+
+                setLoading(false);
+
+                return;
+            }
+
+
+            /* =================================================
+               REGISTRATION SUCCESS
+               ================================================= */
+
+            setMessage(
+                "Registration successful! Redirecting to login..."
+            );
+
+
+            /* =================================================
+               STORE USER
+               ================================================= */
+
+            if (data.user) {
+
+                localStorage.setItem(
+                    "libraryUser",
+                    JSON.stringify(data.user)
+                );
+            }
+
+
+            /* =================================================
+               REDIRECT TO LOGIN
+               ================================================= */
+
+            setTimeout(() => {
+
+                navigate("/login");
+
+            }, 1500);
+
+
+        } catch (error) {
+
+            console.error(
+                "Registration error:",
+                error
+            );
+
+            setError(
+                "Unable to connect to the server. Please try again."
+            );
+
+        } finally {
+
+            setLoading(false);
+
+        }
     };
 
 
     return (
 
-        <div className="auth-page">
+        <div
+            className="auth-page"
+            onMouseMove={handleMouseMove}
+        >
+
+            {/* =================================================
+                FLOATING BUBBLES
+                ================================================= */}
+
+            <div className="floating-bubble bubble-one"></div>
+
+            <div className="floating-bubble bubble-two"></div>
+
+            <div className="floating-bubble bubble-three"></div>
+
+            <div className="floating-bubble bubble-four"></div>
+
+
+            {/* =================================================
+                REGISTER CARD
+                ================================================= */}
 
             <div className="auth-card">
 
 
-                {/* LOGO */}
+                {/* =================================================
+                    LOGO
+                    ================================================= */}
 
                 <div className="auth-logo">
 
-                    📚
+                    <span className="logo-icon">
+                        📚
+                    </span>
 
                     <span>
                         LibraSpace
@@ -103,7 +253,9 @@ function Register() {
                 </div>
 
 
-                {/* TITLE */}
+                {/* =================================================
+                    TITLE
+                    ================================================= */}
 
                 <h1>
                     Create Account
@@ -112,94 +264,141 @@ function Register() {
 
                 <p className="auth-subtitle">
 
-                    Register to reserve library seats and manage
-                    your membership online.
+                    Register to reserve library seats
+                    and manage your membership online.
 
                 </p>
 
 
-                {/* SUCCESS MESSAGE */}
+                {/* =================================================
+                    SUCCESS MESSAGE
+                    ================================================= */}
 
                 {message && (
 
                     <div className="success-message">
 
-                        ✓ {message}
+                        <span className="message-icon">
+                            ✓
+                        </span>
+
+                        <span>
+                            {message}
+                        </span>
 
                     </div>
 
                 )}
 
 
-                {/* ERROR MESSAGE */}
+                {/* =================================================
+                    ERROR MESSAGE
+                    ================================================= */}
 
                 {error && (
 
                     <div className="error-message">
 
-                        ⚠ {error}
+                        <span className="message-icon">
+                            ⚠
+                        </span>
+
+                        <span>
+                            {error}
+                        </span>
 
                     </div>
 
                 )}
 
 
-                {/* REGISTER FORM */}
+                {/* =================================================
+                    REGISTER FORM
+                    ================================================= */}
 
                 <form onSubmit={handleSubmit}>
 
 
-                    {/* FULL NAME */}
+                    {/* =================================================
+                        FULL NAME
+                        ================================================= */}
 
                     <div className="form-group">
 
-                        <label>
+                        <label htmlFor="fullName">
                             Full Name
                         </label>
 
-                        <input
-                            type="text"
-                            name="fullName"
-                            placeholder="Enter your full name"
-                            value={formData.fullName}
-                            onChange={handleChange}
-                            required
-                        />
+                        <div className="input-wrapper">
+
+                            <span className="input-icon">
+                                👤
+                            </span>
+
+                            <input
+                                id="fullName"
+                                type="text"
+                                name="fullName"
+                                placeholder="Enter your full name"
+                                value={formData.fullName}
+                                onChange={handleChange}
+                                required
+                            />
+
+                        </div>
 
                     </div>
 
 
-                    {/* EMAIL */}
+                    {/* =================================================
+                        EMAIL
+                        ================================================= */}
 
                     <div className="form-group">
 
-                        <label>
+                        <label htmlFor="email">
                             Email Address
                         </label>
 
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="Enter your email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                        />
+                        <div className="input-wrapper">
+
+                            <span className="input-icon">
+                                ✉
+                            </span>
+
+                            <input
+                                id="email"
+                                type="email"
+                                name="email"
+                                placeholder="Enter your email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                            />
+
+                        </div>
 
                     </div>
 
 
-                    {/* PASSWORD */}
+                    {/* =================================================
+                        PASSWORD
+                        ================================================= */}
 
                     <div className="form-group">
 
-                        <label>
+                        <label htmlFor="password">
                             Password
                         </label>
 
                         <div className="password-wrapper">
 
+                            <span className="input-icon">
+                                🔒
+                            </span>
+
                             <input
+                                id="password"
                                 type={
                                     showPassword
                                         ? "text"
@@ -216,7 +415,9 @@ function Register() {
                                 type="button"
                                 className="password-eye"
                                 onClick={() =>
-                                    setShowPassword(!showPassword)
+                                    setShowPassword(
+                                        !showPassword
+                                    )
                                 }
                                 aria-label={
                                     showPassword
@@ -225,7 +426,9 @@ function Register() {
                                 }
                             >
 
-                                {showPassword ? "🙈" : "👁️"}
+                                {showPassword
+                                    ? "🙈"
+                                    : "👁️"}
 
                             </button>
 
@@ -234,17 +437,24 @@ function Register() {
                     </div>
 
 
-                    {/* CONFIRM PASSWORD */}
+                    {/* =================================================
+                        CONFIRM PASSWORD
+                        ================================================= */}
 
                     <div className="form-group">
 
-                        <label>
+                        <label htmlFor="confirmPassword">
                             Confirm Password
                         </label>
 
                         <div className="password-wrapper">
 
+                            <span className="input-icon">
+                                🔐
+                            </span>
+
                             <input
+                                id="confirmPassword"
                                 type={
                                     showConfirmPassword
                                         ? "text"
@@ -252,7 +462,9 @@ function Register() {
                                 }
                                 name="confirmPassword"
                                 placeholder="Confirm your password"
-                                value={formData.confirmPassword}
+                                value={
+                                    formData.confirmPassword
+                                }
                                 onChange={handleChange}
                                 required
                             />
@@ -283,21 +495,48 @@ function Register() {
                     </div>
 
 
-                    {/* REGISTER BUTTON */}
+                    {/* =================================================
+                        REGISTER BUTTON
+                        ================================================= */}
 
                     <button
                         type="submit"
                         className="auth-btn"
+                        disabled={loading}
                     >
 
-                        Create Account
+                        {loading ? (
+
+                            <>
+
+                                <span className="loading-spinner"></span>
+
+                                Creating Account...
+
+                            </>
+
+                        ) : (
+
+                            <>
+
+                                Create Account
+
+                                <span className="login-arrow">
+                                    →
+                                </span>
+
+                            </>
+
+                        )}
 
                     </button>
 
                 </form>
 
 
-                {/* LOGIN LINK */}
+                {/* =================================================
+                    LOGIN LINK
+                    ================================================= */}
 
                 <p className="auth-switch">
 
@@ -306,25 +545,43 @@ function Register() {
                     {" "}
 
                     <Link to="/login">
-
                         Login
-
                     </Link>
 
                 </p>
 
 
-                {/* BACK HOME */}
+                {/* =================================================
+                    BACK HOME
+                    ================================================= */}
 
                 <Link
                     to="/"
                     className="back-home"
                 >
 
-                    ← Back to Home
+                    <span>
+                        ←
+                    </span>
+
+                    Back to Home
 
                 </Link>
 
+
+                {/* =================================================
+                    BOTTOM DECORATION
+                    ================================================= */}
+
+                <div className="auth-decoration">
+
+                    <span></span>
+
+                    <span></span>
+
+                    <span></span>
+
+                </div>
 
             </div>
 

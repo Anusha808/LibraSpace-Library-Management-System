@@ -1,7 +1,167 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Membership.css";
 
+const API_BASE_URL = "http://localhost:5000";
+
 function Membership() {
+
+    const [membership, setMembership] = useState(null);
+    const [daysRemaining, setDaysRemaining] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    const getToken = () => {
+        return localStorage.getItem("token");
+    };
+
+    const formatDate = (dateValue) => {
+        if (!dateValue) {
+            return "—";
+        }
+
+        const date = new Date(dateValue);
+
+        if (Number.isNaN(date.getTime())) {
+            return "—";
+        }
+
+        return date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+    };
+
+    const calculateProgress = () => {
+        if (!membership) {
+            return 0;
+        }
+
+        const start = new Date(membership.startDate);
+        const expiry = new Date(membership.expiryDate);
+        const today = new Date();
+
+        if (
+            Number.isNaN(start.getTime()) ||
+            Number.isNaN(expiry.getTime()) ||
+            expiry <= start
+        ) {
+            return 0;
+        }
+
+        const totalDuration = expiry.getTime() - start.getTime();
+        const elapsedDuration = today.getTime() - start.getTime();
+
+        const progress =
+            ((elapsedDuration / totalDuration) * 100);
+
+        return Math.min(
+            100,
+            Math.max(0, progress)
+        );
+    };
+
+    const loadMembership = async () => {
+        try {
+            setLoading(true);
+            setError("");
+
+            const token = getToken();
+
+            if (!token) {
+                setError("Please login to view your membership.");
+                setLoading(false);
+                return;
+            }
+
+            const headers = {
+                Authorization: `Bearer ${token}`,
+                "Cache-Control": "no-cache"
+            };
+
+            const membershipResponse = await fetch(
+                `${API_BASE_URL}/api/memberships/my`,
+                {
+                    method: "GET",
+                    headers
+                }
+            );
+
+            const membershipData =
+                await membershipResponse.json();
+
+            if (!membershipResponse.ok) {
+                throw new Error(
+                    membershipData.message ||
+                    "Unable to fetch membership details"
+                );
+            }
+
+            setMembership(
+                membershipData.membership || null
+            );
+
+            const daysResponse = await fetch(
+                `${API_BASE_URL}/api/memberships/days-remaining`,
+                {
+                    method: "GET",
+                    headers
+                }
+            );
+
+            const daysData = await daysResponse.json();
+
+            if (daysResponse.ok) {
+                setDaysRemaining(
+                    Number(daysData.daysRemaining) || 0
+                );
+            } else {
+                setDaysRemaining(0);
+            }
+
+        } catch (err) {
+            console.error(
+                "Membership loading error:",
+                err
+            );
+
+            setError(
+                err.message ||
+                "Unable to load membership details."
+            );
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadMembership();
+    }, []);
+
+    const progress = calculateProgress();
+
+    const membershipStatus =
+        membership?.status || "inactive";
+
+    const statusLabel =
+        membershipStatus === "active"
+            ? "Active"
+            : membershipStatus === "expired"
+                ? "Expired"
+                : membershipStatus === "cancelled"
+                    ? "Cancelled"
+                    : "Inactive";
+
+    const planName =
+        membership?.planName || "No Membership";
+
+    const planType =
+        membership?.planType || "—";
+
+    const monthlyFee =
+        membership?.monthlyFee ?? 0;
 
     return (
         <div className="membership-page">
@@ -186,7 +346,11 @@ function Membership() {
                         </div>
 
                         <span className="membership-active-badge">
-                            ✓ Active Membership
+                            {loading
+                                ? "Loading..."
+                                : membership
+                                    ? `✓ ${statusLabel} Membership`
+                                    : "No Active Membership"}
                         </span>
 
                     </section>
@@ -211,13 +375,17 @@ function Membership() {
                                     </span>
 
                                     <h3>
-                                        Premium Reader
+                                        {loading
+                                            ? "Loading..."
+                                            : planName}
                                     </h3>
 
                                 </div>
 
                                 <div className="membership-plan-status">
-                                    Active
+                                    {loading
+                                        ? "Loading"
+                                        : statusLabel}
                                 </div>
 
                             </div>
@@ -228,7 +396,7 @@ function Membership() {
                                 <div>
 
                                     <strong>
-                                        ₹499
+                                        ₹{monthlyFee}
                                     </strong>
 
                                     <span>
@@ -238,7 +406,9 @@ function Membership() {
                                 </div>
 
                                 <span className="membership-renew-label">
-                                    Monthly Membership
+                                    {planType === "—"
+                                        ? "Membership"
+                                        : `${planType} Membership`}
                                 </span>
 
                             </div>
@@ -253,14 +423,23 @@ function Membership() {
                                     </span>
 
                                     <strong>
-                                        28 days remaining
+                                        {loading
+                                            ? "Loading..."
+                                            : membershipStatus === "active"
+                                                ? `${daysRemaining} days remaining`
+                                                : "0 days remaining"}
                                     </strong>
 
                                 </div>
 
                                 <div className="membership-progress-track">
 
-                                    <div className="membership-progress-fill"></div>
+                                    <div
+                                        className="membership-progress-fill"
+                                        style={{
+                                            width: `${progress}%`
+                                        }}
+                                    ></div>
 
                                 </div>
 
@@ -276,7 +455,11 @@ function Membership() {
                                     </span>
 
                                     <strong>
-                                        12 Sep 2026
+                                        {loading
+                                            ? "Loading..."
+                                            : formatDate(
+                                                membership?.startDate
+                                            )}
                                     </strong>
 
                                 </div>
@@ -288,7 +471,11 @@ function Membership() {
                                     </span>
 
                                     <strong>
-                                        10 Oct 2026
+                                        {loading
+                                            ? "Loading..."
+                                            : formatDate(
+                                                membership?.expiryDate
+                                            )}
                                     </strong>
 
                                 </div>
@@ -463,15 +650,43 @@ function Membership() {
                             </strong>
 
                             <p>
-                                Your Premium Reader membership is currently
-                                active. You can renew your plan before the
-                                expiry date to maintain uninterrupted access
-                                to LibraSpace services.
+                                {membership
+                                    ? `Your ${planName} membership is currently ${statusLabel.toLowerCase()}. You can renew your plan before the expiry date to maintain uninterrupted access to LibraSpace services.`
+                                    : "You currently do not have a membership. Please choose a membership plan to access LibraSpace services."}
                             </p>
 
                         </div>
 
                     </section>
+
+                    {/* ================= ERROR ================= */}
+
+                    {error && (
+
+                        <section
+                            className="membership-info-card"
+                            style={{ marginTop: "20px" }}
+                        >
+
+                            <div className="membership-info-icon">
+                                ⚠️
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    Unable to load membership
+                                </strong>
+
+                                <p>
+                                    {error}
+                                </p>
+
+                            </div>
+
+                        </section>
+
+                    )}
 
                 </main>
 

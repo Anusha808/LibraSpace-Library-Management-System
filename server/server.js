@@ -4,26 +4,111 @@ const dotenv = require("dotenv");
 
 const connectDB = require("./config/db");
 
+const authRoutes =
+    require("./routes/authRoutes");
+
+const reservationRoutes =
+    require("./routes/reservationRoutes");
+
+const membershipRoutes =
+    require("./routes/membershipRoutes");
+
+const membershipPlanRoutes =
+    require("./routes/membershipPlanRoutes");
+
+const paymentRoutes =
+    require("./routes/paymentRoutes");
+
 dotenv.config();
 
 const app = express();
 
-// Connect MongoDB
+// ==========================================
+// CONNECT MONGODB
+// ==========================================
+
 connectDB();
 
-// Middleware
+// ==========================================
+// MIDDLEWARE
+// ==========================================
+
 app.use(cors());
+
 app.use(express.json());
 
-// Test route
+// ==========================================
+// AUTHENTICATION ROUTES
+// ==========================================
+
+app.use(
+    "/api/auth",
+    authRoutes
+);
+
+// ==========================================
+// RESERVATION ROUTES
+// ==========================================
+
+app.use(
+    "/api/reservations",
+    reservationRoutes
+);
+
+// ==========================================
+// MEMBERSHIP ROUTES
+// ==========================================
+
+app.use(
+    "/api/memberships",
+    membershipRoutes
+);
+
+// ==========================================
+// MEMBERSHIP PLAN ROUTES
+// ==========================================
+
+app.use(
+    "/api/membership-plans",
+    membershipPlanRoutes
+);
+
+// ==========================================
+// PAYMENT ROUTES
+// ==========================================
+
+app.use(
+    "/api/payments",
+    paymentRoutes
+);
+
+// ==========================================
+// TEST ROUTE
+// ==========================================
+
 app.get("/", (req, res) => {
+
     res.json({
-        message: "LibraSpace Backend is running successfully!"
+        message:
+            "LibraSpace Backend is running successfully!"
     });
+
 });
 
-const PORT = process.env.PORT || 5000;
+// ==========================================
+// SERVER
+// ==========================================
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+const PORT =
+    process.env.PORT || 5000;
+
+app.listen(
+    PORT,
+    () => {
+
+        console.log(
+            `Server running on http://localhost:${PORT}`
+        );
+
+    }
+);

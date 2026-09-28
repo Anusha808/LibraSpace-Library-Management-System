@@ -1,54 +1,701 @@
 import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import "./MyReservations.css";
+
+const API_BASE_URL = "http://localhost:5000";
 
 function MyReservations() {
 
-    const reservations = [
-        {
-            id: "RES-001",
-            date: "18 Sep 2026",
-            day: "18",
-            month: "SEP",
-            year: "2026",
-            seat: "A12",
-            time: "10:00 AM - 1:00 PM",
-            duration: "3 Hours",
-            status: "Confirmed"
-        },
-        {
-            id: "RES-002",
-            date: "15 Sep 2026",
-            day: "15",
-            month: "SEP",
-            year: "2026",
-            seat: "B04",
-            time: "02:00 PM - 04:00 PM",
-            duration: "2 Hours",
-            status: "Confirmed"
-        },
-        {
-            id: "RES-003",
-            date: "10 Sep 2026",
-            day: "10",
-            month: "SEP",
-            year: "2026",
-            seat: "C08",
-            time: "09:00 AM - 12:00 PM",
-            duration: "3 Hours",
-            status: "Completed"
-        },
-        {
-            id: "RES-004",
-            date: "05 Sep 2026",
-            day: "05",
-            month: "SEP",
-            year: "2026",
-            seat: "D03",
-            time: "04:00 PM - 06:00 PM",
-            duration: "2 Hours",
-            status: "Completed"
+    /* =========================================
+       STATES
+    ========================================= */
+
+    const [reservations, setReservations] = useState([]);
+
+    const [filter, setFilter] = useState("all");
+
+    const [loading, setLoading] = useState(true);
+
+    const [error, setError] = useState("");
+
+    const [actionLoading, setActionLoading] = useState(null);
+
+
+    /* =========================================
+       TOKEN
+    ========================================= */
+
+    const getToken = () => {
+        return localStorage.getItem("token");
+    };
+
+
+    /* =========================================
+       DATE + TIME HELPERS
+    ========================================= */
+
+    const convertTimeToMinutes = (time) => {
+
+        if (!time) {
+            return 0;
         }
-    ];
+
+        const match = time.match(
+            /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i
+        );
+
+        if (!match) {
+            return 0;
+        }
+
+        let hours = Number(match[1]);
+
+        const minutes = Number(match[2]);
+
+        const period = match[3].toUpperCase();
+
+        if (period === "PM" && hours !== 12) {
+            hours += 12;
+        }
+
+        if (period === "AM" && hours === 12) {
+            hours = 0;
+        }
+
+        return (
+            hours * 60 +
+            minutes
+        );
+    };
+
+
+    const getReservationStartDate = (reservation) => {
+
+        const date = new Date(
+            reservation.reservationDate
+        );
+
+        if (Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const time =
+            reservation.startTime || "";
+
+        const match = time.match(
+            /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i
+        );
+
+        if (match) {
+
+            let hours =
+                Number(match[1]);
+
+            const minutes =
+                Number(match[2]);
+
+            const period =
+                match[3].toUpperCase();
+
+            if (
+                period === "PM" &&
+                hours !== 12
+            ) {
+                hours += 12;
+            }
+
+            if (
+                period === "AM" &&
+                hours === 12
+            ) {
+                hours = 0;
+            }
+
+            date.setHours(
+                hours,
+                minutes,
+                0,
+                0
+            );
+        }
+
+        return date;
+    };
+
+
+    const getReservationEndDate = (reservation) => {
+
+        const date = new Date(
+            reservation.reservationDate
+        );
+
+        if (Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const time =
+            reservation.endTime || "";
+
+        const match = time.match(
+            /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i
+        );
+
+        if (match) {
+
+            let hours =
+                Number(match[1]);
+
+            const minutes =
+                Number(match[2]);
+
+            const period =
+                match[3].toUpperCase();
+
+            if (
+                period === "PM" &&
+                hours !== 12
+            ) {
+                hours += 12;
+            }
+
+            if (
+                period === "AM" &&
+                hours === 12
+            ) {
+                hours = 0;
+            }
+
+            date.setHours(
+                hours,
+                minutes,
+                0,
+                0
+            );
+        }
+
+        return date;
+    };
+
+
+    /* =========================================
+       FORMAT DATE
+    ========================================= */
+
+    const getDateParts = (dateValue) => {
+
+        const date =
+            new Date(dateValue);
+
+        if (Number.isNaN(date.getTime())) {
+
+            return {
+                day: "--",
+                month: "---",
+                year: "----"
+            };
+        }
+
+        return {
+            day: date.toLocaleDateString(
+                "en-GB",
+                {
+                    day: "2-digit"
+                }
+            ),
+
+            month: date.toLocaleDateString(
+                "en-US",
+                {
+                    month: "short"
+                }
+            ).toUpperCase(),
+
+            year: date.toLocaleDateString(
+                "en-US",
+                {
+                    year: "numeric"
+                }
+            )
+        };
+    };
+
+
+    /* =========================================
+       FORMAT TIME
+    ========================================= */
+
+    const formatTime = (time) => {
+
+        if (!time) {
+            return "—";
+        }
+
+        /*
+         * Backend already stores values such as:
+         * 10:00 AM
+         * 01:00 PM
+         *
+         * So return them directly.
+         */
+
+        return time;
+    };
+
+
+    /* =========================================
+       CALCULATE DURATION
+    ========================================= */
+
+    const calculateDuration = (
+        startTime,
+        endTime
+    ) => {
+
+        const start =
+            convertTimeToMinutes(
+                startTime
+            );
+
+        const end =
+            convertTimeToMinutes(
+                endTime
+            );
+
+        if (
+            !startTime ||
+            !endTime ||
+            end <= start
+        ) {
+            return "—";
+        }
+
+        const difference =
+            end - start;
+
+        const hours =
+            difference / 60;
+
+        if (
+            Number.isInteger(hours)
+        ) {
+
+            return `${hours} ${
+                hours === 1
+                    ? "Hour"
+                    : "Hours"
+            }`;
+        }
+
+        return `${hours.toFixed(1)} Hours`;
+    };
+
+
+    /* =========================================
+       USER-FRIENDLY RESERVATION ID
+    ========================================= */
+
+    const getDisplayReservationId = (
+        reservation,
+        index
+    ) => {
+
+        /*
+         * MongoDB _id is the real database ID.
+         *
+         * We display a simple RES-001 style
+         * identifier in the UI.
+         */
+
+        if (reservation.displayId) {
+            return reservation.displayId;
+        }
+
+        return `RES-${String(
+            reservations.length - index
+        ).padStart(3, "0")}`;
+    };
+
+
+    /* =========================================
+       FETCH RESERVATIONS
+    ========================================= */
+
+    const fetchReservations = async () => {
+
+        try {
+
+            setLoading(true);
+
+            setError("");
+
+            const token =
+                getToken();
+
+            if (!token) {
+
+                setError(
+                    "Please login to view your reservations."
+                );
+
+                setReservations([]);
+
+                return;
+            }
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/api/reservations/my`,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`,
+
+                            "Cache-Control":
+                                "no-cache"
+                        }
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to fetch reservations."
+                );
+            }
+
+            const fetchedReservations =
+                data.reservations || [];
+
+            /*
+             * Sort newest reservation first.
+             */
+
+            const sortedReservations =
+                [...fetchedReservations].sort(
+                    (a, b) => {
+
+                        const dateA =
+                            new Date(
+                                a.reservationDate
+                            );
+
+                        const dateB =
+                            new Date(
+                                b.reservationDate
+                            );
+
+                        return (
+                            dateB - dateA
+                        );
+                    }
+                );
+
+            setReservations(
+                sortedReservations
+            );
+
+        } catch (err) {
+
+            console.error(
+                "Fetch reservations error:",
+                err
+            );
+
+            setError(
+                err.message ||
+                "Unable to load reservations."
+            );
+
+            setReservations([]);
+
+        } finally {
+
+            setLoading(false);
+        }
+    };
+
+
+    /* =========================================
+       LOAD DATA
+    ========================================= */
+
+    useEffect(() => {
+
+        fetchReservations();
+
+    }, []);
+
+
+    /* =========================================
+       DETERMINE UPCOMING RESERVATION
+    ========================================= */
+
+    const isUpcomingReservation = (
+        reservation
+    ) => {
+
+        if (
+            reservation.status ===
+            "cancelled"
+        ) {
+            return false;
+        }
+
+        if (
+            reservation.status ===
+            "completed"
+        ) {
+            return false;
+        }
+
+        const startDate =
+            getReservationStartDate(
+                reservation
+            );
+
+        if (!startDate) {
+            return false;
+        }
+
+        return (
+            startDate >= new Date()
+        );
+    };
+
+
+    /* =========================================
+       DETERMINE COMPLETED RESERVATION
+    ========================================= */
+
+    const isCompletedReservation = (
+        reservation
+    ) => {
+
+        if (
+            reservation.status ===
+            "completed"
+        ) {
+            return true;
+        }
+
+        const endDate =
+            getReservationEndDate(
+                reservation
+            );
+
+        if (!endDate) {
+            return false;
+        }
+
+        return (
+            endDate < new Date() &&
+            reservation.status !==
+                "cancelled"
+        );
+    };
+
+
+    /* =========================================
+       SUMMARY COUNTS
+    ========================================= */
+
+    const upcomingCount =
+        useMemo(() => {
+
+            return reservations.filter(
+                isUpcomingReservation
+            ).length;
+
+        }, [reservations]);
+
+
+    const completedCount =
+        useMemo(() => {
+
+            return reservations.filter(
+                isCompletedReservation
+            ).length;
+
+        }, [reservations]);
+
+
+    const totalCount =
+        reservations.length;
+
+
+    /* =========================================
+       FILTERED RESERVATIONS
+    ========================================= */
+
+    const filteredReservations =
+        useMemo(() => {
+
+            if (filter === "upcoming") {
+
+                return reservations.filter(
+                    isUpcomingReservation
+                );
+            }
+
+            if (filter === "completed") {
+
+                return reservations.filter(
+                    isCompletedReservation
+                );
+            }
+
+            return reservations;
+
+        }, [
+            reservations,
+            filter
+        ]);
+
+
+    /* =========================================
+       CANCEL RESERVATION
+    ========================================= */
+
+    const handleCancelReservation = async (
+        reservation
+    ) => {
+
+        if (
+            !reservation?._id
+        ) {
+            return;
+        }
+
+        const confirmCancel =
+            window.confirm(
+                `Are you sure you want to cancel the reservation for seat ${reservation.seatNumber}?`
+            );
+
+        if (!confirmCancel) {
+            return;
+        }
+
+        try {
+
+            setActionLoading(
+                reservation._id
+            );
+
+            setError("");
+
+            const token =
+                getToken();
+
+            if (!token) {
+
+                setError(
+                    "Please login again."
+                );
+
+                return;
+            }
+
+            const response =
+                await fetch(
+                    `${API_BASE_URL}/api/reservations/${reservation._id}/cancel`,
+                    {
+                        method: "PUT",
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`,
+
+                            "Content-Type":
+                                "application/json"
+                        }
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to cancel reservation."
+                );
+            }
+
+            /*
+             * Reload reservations so the
+             * status comes directly from MongoDB.
+             */
+
+            await fetchReservations();
+
+        } catch (err) {
+
+            console.error(
+                "Cancel reservation error:",
+                err
+            );
+
+            setError(
+                err.message ||
+                "Unable to cancel reservation."
+            );
+
+        } finally {
+
+            setActionLoading(null);
+        }
+    };
+
+
+    /* =========================================
+       VIEW RESERVATION
+    ========================================= */
+
+    const handleViewReservation = (
+        reservation
+    ) => {
+
+        const date =
+            getDateParts(
+                reservation.reservationDate
+            );
+
+        window.alert(
+            `Reservation Details\n\n` +
+            `Reservation ID: ${
+                reservation._id
+            }\n` +
+            `Seat: ${
+                reservation.seatNumber
+            }\n` +
+            `Date: ${
+                date.day
+            } ${
+                date.month
+            } ${
+                date.year
+            }\n` +
+            `Time: ${
+                reservation.startTime
+            } - ${
+                reservation.endTime
+            }\n` +
+            `Purpose: ${
+                reservation.purpose ||
+                "Library Study Session"
+            }\n` +
+            `Status: ${
+                reservation.status
+            }`
+        );
+    };
 
 
     return (
@@ -69,8 +716,13 @@ function MyReservations() {
                     </div>
 
                     <div>
-                        <strong>LibraSpace</strong>
-                        <span>Smart Library</span>
+                        <strong>
+                            LibraSpace
+                        </strong>
+
+                        <span>
+                            Smart Library
+                        </span>
                     </div>
 
                 </div>
@@ -84,26 +736,49 @@ function MyReservations() {
                 <nav className="reservations-sidebar-nav">
 
                     <Link to="/dashboard">
-                        <span>⌂</span>
+
+                        <span>
+                            ⌂
+                        </span>
+
                         Dashboard
+
                     </Link>
 
+
                     <Link to="/seats">
-                        <span>💺</span>
+
+                        <span>
+                            💺
+                        </span>
+
                         Reserve Seat
+
                     </Link>
+
 
                     <Link
                         to="/reservations"
                         className="active"
                     >
-                        <span>▣</span>
+
+                        <span>
+                            ▣
+                        </span>
+
                         My Reservations
+
                     </Link>
 
+
                     <Link to="/membership">
-                        <span>♛</span>
+
+                        <span>
+                            ♛
+                        </span>
+
                         Membership
+
                     </Link>
 
                 </nav>
@@ -117,13 +792,24 @@ function MyReservations() {
                 <nav className="reservations-sidebar-nav">
 
                     <Link to="/profile">
-                        <span>◯</span>
+
+                        <span>
+                            ◯
+                        </span>
+
                         My Profile
+
                     </Link>
 
+
                     <Link to="/payment-history">
-                        <span>▤</span>
+
+                        <span>
+                            ▤
+                        </span>
+
                         Payment History
+
                     </Link>
 
                 </nav>
@@ -136,11 +822,15 @@ function MyReservations() {
                         <span className="reservations-status-dot"></span>
 
                         <div>
-                            <strong>Library Open</strong>
+
+                            <strong>
+                                Library Open
+                            </strong>
 
                             <small>
                                 8:00 AM - 10:00 PM
                             </small>
+
                         </div>
 
                     </div>
@@ -262,8 +952,13 @@ function MyReservations() {
                             to="/seats"
                             className="new-reservation-button"
                         >
-                            <span>+</span>
+
+                            <span>
+                                +
+                            </span>
+
                             Reserve a Seat
+
                         </Link>
 
                     </section>
@@ -275,6 +970,9 @@ function MyReservations() {
 
                     <section className="reservation-summary-grid">
 
+
+                        {/* UPCOMING */}
+
                         <div className="reservation-stat-card">
 
                             <div className="reservation-stat-icon">
@@ -282,15 +980,21 @@ function MyReservations() {
                             </div>
 
                             <div>
-                                <strong>2</strong>
+
+                                <strong>
+                                    {upcomingCount}
+                                </strong>
 
                                 <span>
                                     Upcoming
                                 </span>
+
                             </div>
 
                         </div>
 
+
+                        {/* COMPLETED */}
 
                         <div className="reservation-stat-card">
 
@@ -299,15 +1003,21 @@ function MyReservations() {
                             </div>
 
                             <div>
-                                <strong>2</strong>
+
+                                <strong>
+                                    {completedCount}
+                                </strong>
 
                                 <span>
                                     Completed
                                 </span>
+
                             </div>
 
                         </div>
 
+
+                        {/* TOTAL */}
 
                         <div className="reservation-stat-card">
 
@@ -316,11 +1026,15 @@ function MyReservations() {
                             </div>
 
                             <div>
-                                <strong>12</strong>
+
+                                <strong>
+                                    {totalCount}
+                                </strong>
 
                                 <span>
                                     Total Reservations
                                 </span>
+
                             </div>
 
                         </div>
@@ -329,10 +1043,32 @@ function MyReservations() {
 
 
                     {/* =========================================
+                        ERROR
+                    ========================================= */}
+
+                    {error && (
+
+                        <div
+                            className="reservation-error-message"
+                            style={{
+                                marginBottom:
+                                    "20px"
+                            }}
+                        >
+
+                            ⚠️ {error}
+
+                        </div>
+
+                    )}
+
+
+                    {/* =========================================
                         RESERVATION LIST
                     ========================================= */}
 
                     <section className="reservations-card">
+
 
                         <div className="reservations-card-header">
 
@@ -351,7 +1087,14 @@ function MyReservations() {
 
                             <div className="reservation-filter">
 
-                                <select defaultValue="all">
+                                <select
+                                    value={filter}
+                                    onChange={(e) =>
+                                        setFilter(
+                                            e.target.value
+                                        )
+                                    }
+                                >
 
                                     <option value="all">
                                         All Reservations
@@ -372,137 +1115,324 @@ function MyReservations() {
                         </div>
 
 
-                        <div className="reservation-list">
+                        {/* =========================================
+                            LOADING
+                        ========================================= */}
 
-                            {reservations.map((reservation) => (
+                        {loading ? (
+
+                            <div
+                                className="reservation-empty"
+                                style={{
+                                    padding:
+                                        "50px",
+                                    textAlign:
+                                        "center"
+                                }}
+                            >
+
+                                <p>
+                                    Loading your reservations...
+                                </p>
+
+                            </div>
+
+                        ) : filteredReservations.length === 0 ? (
+
+                            /* =====================================
+                               EMPTY STATE
+                            ===================================== */
+
+                            <div
+                                className="reservation-empty"
+                                style={{
+                                    padding:
+                                        "50px",
+                                    textAlign:
+                                        "center"
+                                }}
+                            >
 
                                 <div
-                                    className="reservation-item"
-                                    key={reservation.id}
+                                    style={{
+                                        fontSize:
+                                            "40px",
+                                        marginBottom:
+                                            "12px"
+                                    }}
                                 >
-
-
-                                    {/* DATE */}
-
-                                    <div className="reservation-date-box">
-
-                                        <span>
-                                            {reservation.month}
-                                        </span>
-
-                                        <strong>
-                                            {reservation.day}
-                                        </strong>
-
-                                        <small>
-                                            {reservation.year}
-                                        </small>
-
-                                    </div>
-
-
-                                    {/* DETAILS */}
-
-                                    <div className="reservation-information">
-
-                                        <div className="reservation-title-row">
-
-                                            <h4>
-                                                Library Study Session
-                                            </h4>
-
-                                            <span
-                                                className={
-                                                    reservation.status ===
-                                                    "Confirmed"
-                                                        ? "reservation-status confirmed"
-                                                        : "reservation-status completed"
-                                                }
-                                            >
-                                                {reservation.status ===
-                                                "Confirmed"
-                                                    ? "✓ "
-                                                    : "✓ "
-                                                }
-
-                                                {reservation.status}
-                                            </span>
-
-                                        </div>
-
-
-                                        <div className="reservation-meta-row">
-
-                                            <span>
-                                                💺 Seat{" "}
-                                                <strong>
-                                                    {reservation.seat}
-                                                </strong>
-                                            </span>
-
-                                            <span>
-                                                🕐{" "}
-                                                {reservation.time}
-                                            </span>
-
-                                            <span>
-                                                ⏱️{" "}
-                                                {reservation.duration}
-                                            </span>
-
-                                        </div>
-
-
-                                        <small className="reservation-id">
-                                            Reservation ID:{" "}
-                                            {reservation.id}
-                                        </small>
-
-                                    </div>
-
-
-                                    {/* ACTION */}
-
-                                    <div className="reservation-action">
-
-                                        {reservation.status ===
-                                        "Confirmed" ? (
-
-                                            <button
-                                                type="button"
-                                                className="manage-reservation-button"
-                                                onClick={() =>
-                                                    alert(
-                                                        `Managing reservation ${reservation.id}`
-                                                    )
-                                                }
-                                            >
-                                                Manage
-                                            </button>
-
-                                        ) : (
-
-                                            <button
-                                                type="button"
-                                                className="view-reservation-button"
-                                                onClick={() =>
-                                                    alert(
-                                                        `Reservation ${reservation.id}`
-                                                    )
-                                                }
-                                            >
-                                                View
-                                            </button>
-
-                                        )}
-
-                                    </div>
-
+                                    📅
                                 </div>
 
-                            ))}
+                                <h3>
+                                    No Reservations Found
+                                </h3>
 
-                        </div>
+                                <p>
+                                    {filter === "upcoming"
+                                        ? "You do not have any upcoming reservations."
+                                        : filter === "completed"
+                                            ? "You do not have any completed reservations."
+                                            : "You have not made any seat reservations yet."
+                                    }
+                                </p>
+
+                                <Link
+                                    to="/seats"
+                                    className="new-reservation-button"
+                                    style={{
+                                        display:
+                                            "inline-flex",
+                                        marginTop:
+                                            "18px"
+                                    }}
+                                >
+
+                                    <span>
+                                        +
+                                    </span>
+
+                                    Reserve a Seat
+
+                                </Link>
+
+                            </div>
+
+                        ) : (
+
+                            /* =====================================
+                               RESERVATION LIST
+                            ===================================== */
+
+                            <div className="reservation-list">
+
+                                {filteredReservations.map(
+                                    (
+                                        reservation,
+                                        index
+                                    ) => {
+
+                                        const date =
+                                            getDateParts(
+                                                reservation.reservationDate
+                                            );
+
+                                        const upcoming =
+                                            isUpcomingReservation(
+                                                reservation
+                                            );
+
+                                        const completed =
+                                            isCompletedReservation(
+                                                reservation
+                                            );
+
+                                        const cancelled =
+                                            reservation.status ===
+                                            "cancelled";
+
+                                        const displayId =
+                                            getDisplayReservationId(
+                                                reservation,
+                                                index
+                                            );
+
+                                        return (
+
+                                            <div
+                                                className="reservation-item"
+                                                key={
+                                                    reservation._id
+                                                }
+                                            >
+
+
+                                                {/* DATE */}
+
+                                                <div className="reservation-date-box">
+
+                                                    <span>
+                                                        {
+                                                            date.month
+                                                        }
+                                                    </span>
+
+                                                    <strong>
+                                                        {
+                                                            date.day
+                                                        }
+                                                    </strong>
+
+                                                    <small>
+                                                        {
+                                                            date.year
+                                                        }
+                                                    </small>
+
+                                                </div>
+
+
+                                                {/* DETAILS */}
+
+                                                <div className="reservation-information">
+
+                                                    <div className="reservation-title-row">
+
+                                                        <h4>
+                                                            {
+                                                                reservation.purpose ||
+                                                                "Library Study Session"
+                                                            }
+                                                        </h4>
+
+
+                                                        <span
+                                                            className={
+                                                                `reservation-status ${
+                                                                    cancelled
+                                                                        ? "cancelled"
+                                                                        : completed
+                                                                            ? "completed"
+                                                                            : "confirmed"
+                                                                }`
+                                                            }
+                                                        >
+
+                                                            {cancelled
+                                                                ? "✕ Cancelled"
+                                                                : completed
+                                                                    ? "✓ Completed"
+                                                                    : "✓ Confirmed"
+                                                            }
+
+                                                        </span>
+
+                                                    </div>
+
+
+                                                    <div className="reservation-meta-row">
+
+                                                        <span>
+
+                                                            💺 Seat{" "}
+
+                                                            <strong>
+                                                                {
+                                                                    reservation.seatNumber
+                                                                }
+                                                            </strong>
+
+                                                        </span>
+
+
+                                                        <span>
+
+                                                            🕐{" "}
+
+                                                            {
+                                                                formatTime(
+                                                                    reservation.startTime
+                                                                )
+                                                            }
+
+                                                            {" - "}
+
+                                                            {
+                                                                formatTime(
+                                                                    reservation.endTime
+                                                                )
+                                                            }
+
+                                                        </span>
+
+
+                                                        <span>
+
+                                                            ⏱️{" "}
+
+                                                            {
+                                                                calculateDuration(
+                                                                    reservation.startTime,
+                                                                    reservation.endTime
+                                                                )
+                                                            }
+
+                                                        </span>
+
+                                                    </div>
+
+
+                                                    <small className="reservation-id">
+
+                                                        Reservation ID:{" "}
+
+                                                        {
+                                                            displayId
+                                                        }
+
+                                                    </small>
+
+                                                </div>
+
+
+                                                {/* ACTION */}
+
+                                                <div className="reservation-action">
+
+                                                    {upcoming ? (
+
+                                                        <button
+                                                            type="button"
+                                                            className="manage-reservation-button"
+                                                            disabled={
+                                                                actionLoading ===
+                                                                reservation._id
+                                                            }
+                                                            onClick={() =>
+                                                                handleCancelReservation(
+                                                                    reservation
+                                                                )
+                                                            }
+                                                        >
+
+                                                            {
+                                                                actionLoading ===
+                                                                reservation._id
+                                                                    ? "Cancelling..."
+                                                                    : "Cancel"
+                                                            }
+
+                                                        </button>
+
+                                                    ) : (
+
+                                                        <button
+                                                            type="button"
+                                                            className="view-reservation-button"
+                                                            onClick={() =>
+                                                                handleViewReservation(
+                                                                    reservation
+                                                                )
+                                                            }
+                                                        >
+
+                                                            View
+
+                                                        </button>
+
+                                                    )}
+
+                                                </div>
+
+                                            </div>
+
+                                        );
+                                    }
+                                )}
+
+                            </div>
+
+                        )}
 
                     </section>
 

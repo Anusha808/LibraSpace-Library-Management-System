@@ -1,8 +1,495 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import "./StudentDashboard.css";
 
 function StudentDashboard() {
+
+    const navigate = useNavigate();
+
+    // =========================================
+    // GET LOGGED-IN USER
+    // =========================================
+
+    const storedUser = localStorage.getItem("user");
+
+    let user = null;
+
+    try {
+        user = storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+        console.error(
+            "Unable to read user data:",
+            error
+        );
+    }
+
+    // =========================================
+    // USER INFORMATION
+    // =========================================
+
+    const userName = user?.name || "Student";
+
+    const avatarLetter = userName
+        .charAt(0)
+        .toUpperCase();
+
+    // Use a stable primitive value for API/effect dependencies.
+    const userId = user?.id || user?._id || null;
+
+    const API_BASE_URL =
+        "http://localhost:5000";
+
+
+    // =========================================
+    // RESERVATION STATE
+    // =========================================
+
+    const [reservations, setReservations] = useState([]);
+
+    const [loadingReservations, setLoadingReservations] =
+        useState(true);
+
+    const [reservationError, setReservationError] =
+        useState("");
+
+
+    // =========================================
+    // MEMBERSHIP STATE
+    // =========================================
+
+    const [membership, setMembership] =
+        useState(null);
+
+    const [membershipDays, setMembershipDays] =
+        useState(0);
+
+    const [loadingMembership, setLoadingMembership] =
+        useState(true);
+
+    const [membershipError, setMembershipError] =
+        useState("");
+
+
+    // =========================================
+    // REDIRECT IF USER IS NOT LOGGED IN
+    // =========================================
+
+    useEffect(() => {
+
+        const token =
+            localStorage.getItem("token");
+
+        if (!user || !token) {
+            navigate("/login");
+        }
+
+    }, [navigate, userId]);
+
+
+    // =========================================
+    // FETCH USER RESERVATIONS
+    // =========================================
+
+    useEffect(() => {
+
+        const fetchReservations = async () => {
+
+            const token =
+                localStorage.getItem("token");
+
+            if (!token) {
+                return;
+            }
+
+            try {
+
+                const response = await fetch(
+                    `${API_BASE_URL}/api/reservations/my`,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Authorization":
+                                `Bearer ${token}`,
+                            "Cache-Control": "no-cache"
+                        }
+                    }
+                );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+
+                    console.error(
+                        "Reservation API error:",
+                        response.status,
+                        data
+                    );
+
+                    setReservationError(
+                        data.message ||
+                        "Unable to load reservations"
+                    );
+
+                    setLoadingReservations(false);
+
+                    return;
+                }
+
+                setReservations(
+                    data.reservations || []
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Reservation fetch error:",
+                    error
+                );
+
+                setReservationError(
+                    "Unable to connect to the server"
+                );
+
+            } finally {
+
+                setLoadingReservations(false);
+
+            }
+        };
+
+        if (userId) {
+            fetchReservations();
+        }
+
+    }, [userId]);
+
+
+    // =========================================
+    // FETCH MEMBERSHIP
+    // =========================================
+
+    useEffect(() => {
+
+        const fetchMembership = async () => {
+
+            const token =
+                localStorage.getItem("token");
+
+            if (!token) {
+                return;
+            }
+
+            try {
+
+                // Get membership
+                const membershipResponse =
+                    await fetch(
+                        `${API_BASE_URL}/api/memberships/my`,
+                        {
+                            method: "GET",
+
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`,
+                                "Cache-Control": "no-cache"
+                            }
+                        }
+                    );
+
+                const membershipData =
+                    await membershipResponse.json();
+
+                if (!membershipResponse.ok) {
+
+                    console.error(
+                        "Membership API error:",
+                        membershipResponse.status,
+                        membershipData
+                    );
+
+                    setMembershipError(
+                        membershipData.message ||
+                        "Unable to load membership"
+                    );
+
+                    setLoadingMembership(false);
+
+                    return;
+                }
+
+                setMembership(
+                    membershipData.membership || null
+                );
+
+
+                // Get remaining days
+                const daysResponse =
+                    await fetch(
+                        `${API_BASE_URL}/api/memberships/days-remaining`,
+                        {
+                            method: "GET",
+
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`,
+                                "Cache-Control": "no-cache"
+                            }
+                        }
+                    );
+
+                const daysData =
+                    await daysResponse.json();
+
+                if (daysResponse.ok) {
+
+                    setMembershipDays(
+                        Number(
+                            daysData.daysRemaining
+                        ) || 0
+                    );
+
+                } else {
+
+                    console.error(
+                        "Membership days API error:",
+                        daysResponse.status,
+                        daysData
+                    );
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Membership fetch error:",
+                    error
+                );
+
+                setMembershipError(
+                    "Unable to connect to the server"
+                );
+
+            } finally {
+
+                setLoadingMembership(false);
+
+            }
+        };
+
+        if (userId) {
+            fetchMembership();
+        }
+
+    }, [userId]);
+
+
+    // =========================================
+    // RESERVATION DATA
+    // =========================================
+
+    const confirmedReservations =
+        reservations.filter(
+            (reservation) =>
+                reservation.status === "confirmed"
+        );
+
+
+    const totalReservations =
+        reservations.length;
+
+
+    // Convert a reservation's date + start time into one Date value.
+    // This prevents a same-day reservation from being treated as past
+    // simply because reservationDate is stored at midnight.
+    const getReservationStartDate = (reservation) => {
+
+        const date = new Date(
+            reservation.reservationDate
+        );
+
+        const time = reservation.startTime || "";
+
+        const timeMatch = time.match(
+            /^(\\d{1,2}):(\\d{2})\\s*(AM|PM)$/i
+        );
+
+        if (timeMatch) {
+
+            let hours =
+                parseInt(timeMatch[1], 10);
+
+            const minutes =
+                parseInt(timeMatch[2], 10);
+
+            const period =
+                timeMatch[3].toUpperCase();
+
+            if (period === "PM" && hours !== 12) {
+                hours += 12;
+            }
+
+            if (period === "AM" && hours === 12) {
+                hours = 0;
+            }
+
+            date.setHours(
+                hours,
+                minutes,
+                0,
+                0
+            );
+        }
+
+        return date;
+    };
+
+    const nextReservation =
+        confirmedReservations
+            .filter(
+                (reservation) =>
+                    getReservationStartDate(
+                        reservation
+                    ) >= new Date()
+            )
+            .sort(
+                (a, b) =>
+                    getReservationStartDate(a) -
+                    getReservationStartDate(b)
+            )[0] || null;
+
+
+    const currentSeat =
+        nextReservation
+            ? nextReservation.seatNumber
+            : "—";
+
+
+    const currentSeatTime =
+        nextReservation
+            ? nextReservation.startTime
+            : "No active reservation";
+
+
+    // =========================================
+    // MEMBERSHIP DATA
+    // =========================================
+
+    const membershipPlan =
+        membership?.planName || "No Membership";
+
+
+    const membershipType =
+        membership?.planType || "Not Available";
+
+
+    const membershipFee =
+        membership?.monthlyFee ?? 0;
+
+
+    const membershipStatus =
+        membership?.status || "inactive";
+
+
+    const membershipStatusText =
+        membershipStatus.charAt(0).toUpperCase() +
+        membershipStatus.slice(1);
+
+
+    const formattedExpiryDate =
+        membership?.expiryDate
+            ? new Date(
+                membership.expiryDate
+            ).toLocaleDateString(
+                "en-IN",
+                {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric"
+                }
+            )
+            : "Not available";
+
+
+    // Calculate membership progress
+    let membershipProgress = 0;
+
+    if (
+        membership?.startDate &&
+        membership?.expiryDate
+    ) {
+
+        const startDate =
+            new Date(
+                membership.startDate
+            ).getTime();
+
+        const expiryDate =
+            new Date(
+                membership.expiryDate
+            ).getTime();
+
+        const today =
+            new Date().getTime();
+
+        const totalDuration =
+            expiryDate - startDate;
+
+        const elapsedDuration =
+            today - startDate;
+
+        if (
+            Number.isFinite(startDate) &&
+            Number.isFinite(expiryDate) &&
+            totalDuration > 0
+        ) {
+
+            membershipProgress =
+                Math.min(
+                    100,
+                    Math.max(
+                        0,
+                        (elapsedDuration /
+                            totalDuration) *
+                        100
+                    )
+                );
+        }
+    }
+
+
+    // =========================================
+    // LOGOUT
+    // =========================================
+
+    const handleLogout = () => {
+
+        localStorage.removeItem("token");
+
+        localStorage.removeItem("user");
+
+        localStorage.removeItem("libraryUser");
+
+        navigate("/login");
+    };
+
+
+    // =========================================
+    // IF USER IS NOT AVAILABLE
+    // =========================================
+
+    if (!user) {
+        return null;
+    }
+
+
+    // =========================================
+    // PAGE
+    // =========================================
+
     return (
+
         <div className="dashboard-page">
 
             {/* =========================================
@@ -12,14 +499,21 @@ function StudentDashboard() {
             <aside className="dashboard-sidebar">
 
                 <div className="sidebar-logo">
+
                     <div className="sidebar-logo-icon">
                         📚
                     </div>
 
                     <div>
-                        <strong>LibraSpace</strong>
-                        <span>Smart Library</span>
+                        <strong>
+                            LibraSpace
+                        </strong>
+
+                        <span>
+                            Smart Library
+                        </span>
                     </div>
+
                 </div>
 
 
@@ -34,8 +528,13 @@ function StudentDashboard() {
                         to="/dashboard"
                         className="sidebar-link active"
                     >
-                        <span className="sidebar-icon">⌂</span>
-                        <span>Dashboard</span>
+                        <span className="sidebar-icon">
+                            ⌂
+                        </span>
+
+                        <span>
+                            Dashboard
+                        </span>
                     </Link>
 
 
@@ -43,8 +542,13 @@ function StudentDashboard() {
                         to="/seats"
                         className="sidebar-link"
                     >
-                        <span className="sidebar-icon">💺</span>
-                        <span>Reserve Seat</span>
+                        <span className="sidebar-icon">
+                            💺
+                        </span>
+
+                        <span>
+                            Reserve Seat
+                        </span>
                     </Link>
 
 
@@ -52,8 +556,13 @@ function StudentDashboard() {
                         to="/reservations"
                         className="sidebar-link"
                     >
-                        <span className="sidebar-icon">▣</span>
-                        <span>My Reservations</span>
+                        <span className="sidebar-icon">
+                            ▣
+                        </span>
+
+                        <span>
+                            My Reservations
+                        </span>
                     </Link>
 
 
@@ -61,8 +570,13 @@ function StudentDashboard() {
                         to="/membership"
                         className="sidebar-link"
                     >
-                        <span className="sidebar-icon">♛</span>
-                        <span>Membership</span>
+                        <span className="sidebar-icon">
+                            ♛
+                        </span>
+
+                        <span>
+                            Membership
+                        </span>
                     </Link>
 
                 </nav>
@@ -79,8 +593,13 @@ function StudentDashboard() {
                         to="/profile"
                         className="sidebar-link"
                     >
-                        <span className="sidebar-icon">◯</span>
-                        <span>My Profile</span>
+                        <span className="sidebar-icon">
+                            ◯
+                        </span>
+
+                        <span>
+                            My Profile
+                        </span>
                     </Link>
 
 
@@ -88,8 +607,13 @@ function StudentDashboard() {
                         to="/payment-history"
                         className="sidebar-link"
                     >
-                        <span className="sidebar-icon">▤</span>
-                        <span>Payment History</span>
+                        <span className="sidebar-icon">
+                            ▤
+                        </span>
+
+                        <span>
+                            Payment History
+                        </span>
                     </Link>
 
                 </nav>
@@ -102,20 +626,31 @@ function StudentDashboard() {
                         <div className="status-dot"></div>
 
                         <div>
-                            <strong>Library Open</strong>
-                            <span>Today · 8:00 AM - 10:00 PM</span>
+
+                            <strong>
+                                Library Open
+                            </strong>
+
+                            <span>
+                                Today · 8:00 AM - 10:00 PM
+                            </span>
+
                         </div>
 
                     </div>
 
 
-                    <Link
-                        to="/"
+                    <button
+                        type="button"
                         className="logout-link"
+                        onClick={handleLogout}
                     >
-                        <span>↪</span>
+                        <span>
+                            ↪
+                        </span>
+
                         Logout
-                    </Link>
+                    </button>
 
                 </div>
 
@@ -136,7 +671,10 @@ function StudentDashboard() {
                 <header className="dashboard-topbar">
 
                     <div className="mobile-logo">
-                        📚 <strong>LibraSpace</strong>
+                        📚
+                        <strong>
+                            LibraSpace
+                        </strong>
                     </div>
 
 
@@ -161,7 +699,9 @@ function StudentDashboard() {
                             aria-label="Notifications"
                         >
                             🔔
+
                             <span className="notification-dot"></span>
+
                         </button>
 
 
@@ -171,13 +711,14 @@ function StudentDashboard() {
                         >
 
                             <div className="top-avatar">
-                                A
+                                {avatarLetter}
                             </div>
+
 
                             <div className="top-profile-info">
 
                                 <strong>
-                                    Student
+                                    {userName}
                                 </strong>
 
                                 <span>
@@ -185,6 +726,7 @@ function StudentDashboard() {
                                 </span>
 
                             </div>
+
 
                             <span className="profile-arrow">
                                 ▾
@@ -216,21 +758,28 @@ function StudentDashboard() {
                                 GOOD MORNING
                             </span>
 
+
                             <h1>
-                                Welcome back, Student! 👋
+                                Welcome back, {userName}! 👋
                             </h1>
+
 
                             <p>
                                 Everything you need to manage your
                                 library experience is right here.
                             </p>
 
+
                             <Link
                                 to="/seats"
                                 className="welcome-button"
                             >
                                 Reserve a Seat
-                                <span>→</span>
+
+                                <span>
+                                    →
+                                </span>
+
                             </Link>
 
                         </div>
@@ -240,17 +789,21 @@ function StudentDashboard() {
 
                             <div className="illustration-circle"></div>
 
+
                             <div className="illustration-book book-1">
                                 📕
                             </div>
+
 
                             <div className="illustration-book book-2">
                                 📗
                             </div>
 
+
                             <div className="illustration-book book-3">
                                 📘
                             </div>
+
 
                             <div className="illustration-lamp">
                                 💡
@@ -268,6 +821,8 @@ function StudentDashboard() {
                     <section className="stats-grid">
 
 
+                        {/* CURRENT SEAT */}
+
                         <div className="professional-stat-card">
 
                             <div className="stat-card-top">
@@ -276,26 +831,47 @@ function StudentDashboard() {
                                     💺
                                 </div>
 
-                                <span className="stat-trend positive">
-                                    ● Active
+                                <span
+                                    className={
+                                        nextReservation
+                                            ? "stat-trend positive"
+                                            : "stat-trend warning"
+                                    }
+                                >
+                                    {nextReservation
+                                        ? "● Active"
+                                        : "No booking"}
                                 </span>
 
                             </div>
 
+
                             <div className="professional-stat-value">
-                                A12
+
+                                {loadingReservations
+                                    ? "..."
+                                    : currentSeat}
+
                             </div>
+
 
                             <div className="professional-stat-label">
                                 Current Seat
                             </div>
 
+
                             <div className="stat-description">
-                                Today · 10:00 AM
+
+                                {loadingReservations
+                                    ? "Loading..."
+                                    : currentSeatTime}
+
                             </div>
 
                         </div>
 
+
+                        {/* TOTAL RESERVATIONS */}
 
                         <div className="professional-stat-card">
 
@@ -305,19 +881,31 @@ function StudentDashboard() {
                                     📅
                                 </div>
 
+
                                 <span className="stat-trend">
-                                    +3 this month
+
+                                    {totalReservations === 1
+                                        ? "1 booking"
+                                        : `${totalReservations} bookings`}
+
                                 </span>
 
                             </div>
 
+
                             <div className="professional-stat-value">
-                                12
+
+                                {loadingReservations
+                                    ? "..."
+                                    : totalReservations}
+
                             </div>
+
 
                             <div className="professional-stat-label">
                                 Total Reservations
                             </div>
+
 
                             <div className="stat-description">
                                 Successful bookings
@@ -325,6 +913,8 @@ function StudentDashboard() {
 
                         </div>
 
+
+                        {/* MEMBERSHIP PLAN */}
 
                         <div className="professional-stat-card">
 
@@ -334,26 +924,48 @@ function StudentDashboard() {
                                     ♛
                                 </div>
 
-                                <span className="stat-trend positive">
-                                    ● Active
+
+                                <span
+                                    className={
+                                        membershipStatus === "active"
+                                            ? "stat-trend positive"
+                                            : "stat-trend warning"
+                                    }
+                                >
+                                    {loadingMembership
+                                        ? "..."
+                                        : `● ${membershipStatusText}`}
                                 </span>
 
                             </div>
 
+
                             <div className="professional-stat-value">
-                                Premium
+
+                                {loadingMembership
+                                    ? "..."
+                                    : membershipPlan}
+
                             </div>
+
 
                             <div className="professional-stat-label">
                                 Membership Plan
                             </div>
 
+
                             <div className="stat-description">
-                                Premium Reader
+
+                                {loadingMembership
+                                    ? "Loading..."
+                                    : membershipType}
+
                             </div>
 
                         </div>
 
+
+                        {/* MEMBERSHIP REMAINING */}
 
                         <div className="professional-stat-card">
 
@@ -363,22 +975,44 @@ function StudentDashboard() {
                                     ⏳
                                 </div>
 
-                                <span className="stat-trend warning">
-                                    Renew soon
+
+                                <span
+                                    className={
+                                        membershipDays > 7
+                                            ? "stat-trend positive"
+                                            : "stat-trend warning"
+                                    }
+                                >
+                                    {loadingMembership
+                                        ? "..."
+                                        : membershipDays > 7
+                                            ? "● Active"
+                                            : "Renew soon"}
                                 </span>
 
                             </div>
 
+
                             <div className="professional-stat-value">
-                                28 Days
+
+                                {loadingMembership
+                                    ? "..."
+                                    : `${membershipDays} Days`}
+
                             </div>
+
 
                             <div className="professional-stat-label">
                                 Membership Remaining
                             </div>
 
+
                             <div className="stat-description">
-                                Expires 10 Oct 2026
+
+                                {loadingMembership
+                                    ? "Loading..."
+                                    : `Expires ${formattedExpiryDate}`}
+
                             </div>
 
                         </div>
@@ -413,6 +1047,7 @@ function StudentDashboard() {
 
                                 </div>
 
+
                                 <Link
                                     to="/reservations"
                                     className="view-link"
@@ -425,37 +1060,133 @@ function StudentDashboard() {
 
                             <div className="next-reservation">
 
+
+                                {/* CALENDAR */}
+
                                 <div className="reservation-calendar">
 
-                                    <span>
-                                        SEP
-                                    </span>
+                                    {loadingReservations ? (
 
-                                    <strong>
-                                        18
-                                    </strong>
+                                        <>
+                                            <span>
+                                                ---
+                                            </span>
 
-                                    <small>
-                                        2026
-                                    </small>
+                                            <strong>
+                                                --
+                                            </strong>
+
+                                            <small>
+                                                ----
+                                            </small>
+                                        </>
+
+                                    ) : nextReservation ? (
+
+                                        <>
+                                            <span>
+
+                                                {new Date(
+                                                    nextReservation.reservationDate
+                                                )
+                                                    .toLocaleString(
+                                                        "en-US",
+                                                        {
+                                                            month: "short"
+                                                        }
+                                                    )
+                                                    .toUpperCase()}
+
+                                            </span>
+
+
+                                            <strong>
+
+                                                {new Date(
+                                                    nextReservation.reservationDate
+                                                ).getDate()}
+
+                                            </strong>
+
+
+                                            <small>
+
+                                                {new Date(
+                                                    nextReservation.reservationDate
+                                                ).getFullYear()}
+
+                                            </small>
+
+                                        </>
+
+                                    ) : (
+
+                                        <>
+                                            <span>
+                                                ---
+                                            </span>
+
+                                            <strong>
+                                                --
+                                            </strong>
+
+                                            <small>
+                                                ----
+                                            </small>
+                                        </>
+
+                                    )}
 
                                 </div>
 
 
+                                {/* RESERVATION DETAILS */}
+
                                 <div className="reservation-main">
 
                                     <h4>
-                                        Library Study Session
+
+                                        {loadingReservations
+                                            ? "Loading reservation..."
+                                            : nextReservation
+                                                ? nextReservation.purpose
+                                                : "No upcoming reservation"}
+
                                     </h4>
 
-                                    <div className="reservation-meta">
-                                        <span>💺 Seat A12</span>
-                                        <span>🕐 10:00 AM - 1:00 PM</span>
-                                    </div>
 
-                                    <span className="confirmed-status">
-                                        ✓ Confirmed
-                                    </span>
+                                    {nextReservation && (
+
+                                        <div className="reservation-meta">
+
+                                            <span>
+                                                💺 Seat{" "}
+                                                {nextReservation.seatNumber}
+                                            </span>
+
+
+                                            <span>
+                                                🕐{" "}
+                                                {nextReservation.startTime}
+                                                {" - "}
+                                                {nextReservation.endTime}
+                                            </span>
+
+                                        </div>
+
+                                    )}
+
+
+                                    {nextReservation && (
+
+                                        <span className="confirmed-status">
+
+                                            ✓{" "}
+                                            {nextReservation.status}
+
+                                        </span>
+
+                                    )}
 
                                 </div>
 
@@ -470,6 +1201,7 @@ function StudentDashboard() {
                                 >
                                     Manage Reservation
                                 </Link>
+
 
                                 <Link
                                     to="/seats"
@@ -497,14 +1229,22 @@ function StudentDashboard() {
                                         MEMBERSHIP
                                     </span>
 
+
                                     <h3>
-                                        Premium Reader
+                                        {loadingMembership
+                                            ? "Loading..."
+                                            : membershipPlan}
                                     </h3>
 
                                 </div>
 
+
                                 <span className="membership-active">
-                                    Active
+
+                                    {loadingMembership
+                                        ? "..."
+                                        : membershipStatusText}
+
                                 </span>
 
                             </div>
@@ -516,14 +1256,20 @@ function StudentDashboard() {
                                     ♛
                                 </div>
 
+
                                 <div>
 
                                     <span>
                                         Current Plan
                                     </span>
 
+
                                     <strong>
-                                        Premium Reader
+
+                                        {loadingMembership
+                                            ? "Loading..."
+                                            : membershipPlan}
+
                                     </strong>
 
                                 </div>
@@ -534,13 +1280,38 @@ function StudentDashboard() {
                             <div className="membership-details">
 
                                 <div>
-                                    <span>Monthly Fee</span>
-                                    <strong>₹499</strong>
+
+                                    <span>
+                                        Monthly Fee
+                                    </span>
+
+
+                                    <strong>
+
+                                        {loadingMembership
+                                            ? "..."
+                                            : `₹${membershipFee}`}
+
+                                    </strong>
+
                                 </div>
 
+
                                 <div>
-                                    <span>Valid Until</span>
-                                    <strong>10 Oct 2026</strong>
+
+                                    <span>
+                                        Valid Until
+                                    </span>
+
+
+                                    <strong>
+
+                                        {loadingMembership
+                                            ? "..."
+                                            : formattedExpiryDate}
+
+                                    </strong>
+
                                 </div>
 
                             </div>
@@ -554,15 +1325,26 @@ function StudentDashboard() {
                                         Membership period
                                     </span>
 
+
                                     <strong>
-                                        28 days left
+
+                                        {loadingMembership
+                                            ? "..."
+                                            : `${membershipDays} days left`}
+
                                     </strong>
 
                                 </div>
 
+
                                 <div className="progress-track">
 
-                                    <div className="progress-fill"></div>
+                                    <div
+                                        className="progress-fill"
+                                        style={{
+                                            width: `${membershipProgress}%`
+                                        }}
+                                    ></div>
 
                                 </div>
 
@@ -575,6 +1357,20 @@ function StudentDashboard() {
                             >
                                 Manage Membership →
                             </Link>
+
+                            {membershipError && (
+
+                                <div
+                                    style={{
+                                        marginTop: "10px",
+                                        fontSize: "12px",
+                                        color: "#dc2626"
+                                    }}
+                                >
+                                    {membershipError}
+                                </div>
+
+                            )}
 
                         </div>
 
@@ -595,6 +1391,7 @@ function StudentDashboard() {
                                     QUICK ACTIONS
                                 </span>
 
+
                                 <h3>
                                     What would you like to do?
                                 </h3>
@@ -607,6 +1404,8 @@ function StudentDashboard() {
                         <div className="professional-quick-grid">
 
 
+                            {/* RESERVE */}
+
                             <Link
                                 to="/seats"
                                 className="professional-quick-card"
@@ -616,16 +1415,19 @@ function StudentDashboard() {
                                     💺
                                 </div>
 
+
                                 <div>
 
                                     <h4>
                                         Reserve a Seat
                                     </h4>
 
+
                                     <p>
                                         Find an available seat for your
                                         next study session.
                                     </p>
+
 
                                     <span>
                                         Reserve now →
@@ -636,6 +1438,8 @@ function StudentDashboard() {
                             </Link>
 
 
+                            {/* RESERVATIONS */}
+
                             <Link
                                 to="/reservations"
                                 className="professional-quick-card"
@@ -645,16 +1449,19 @@ function StudentDashboard() {
                                     📋
                                 </div>
 
+
                                 <div>
 
                                     <h4>
                                         My Reservations
                                     </h4>
 
+
                                     <p>
                                         View and manage your upcoming
                                         library bookings.
                                     </p>
+
 
                                     <span>
                                         View reservations →
@@ -665,6 +1472,8 @@ function StudentDashboard() {
                             </Link>
 
 
+                            {/* MEMBERSHIP */}
+
                             <Link
                                 to="/membership"
                                 className="professional-quick-card"
@@ -674,16 +1483,19 @@ function StudentDashboard() {
                                     ♛
                                 </div>
 
+
                                 <div>
 
                                     <h4>
                                         Membership
                                     </h4>
 
+
                                     <p>
                                         Manage your membership and
                                         renewal options.
                                     </p>
+
 
                                     <span>
                                         Manage plan →
@@ -694,6 +1506,8 @@ function StudentDashboard() {
                             </Link>
 
 
+                            {/* PROFILE */}
+
                             <Link
                                 to="/profile"
                                 className="professional-quick-card"
@@ -703,16 +1517,19 @@ function StudentDashboard() {
                                     👤
                                 </div>
 
+
                                 <div>
 
                                     <h4>
                                         My Profile
                                     </h4>
 
+
                                     <p>
                                         Update your personal account
                                         information.
                                     </p>
+
 
                                     <span>
                                         View profile →
@@ -741,14 +1558,22 @@ function StudentDashboard() {
                                     ACTIVITY
                                 </span>
 
+
                                 <h3>
                                     Recent Activity
                                 </h3>
 
                             </div>
 
+
                             <span className="activity-count">
-                                3 recent activities
+
+                                {reservations.length} recent{" "}
+
+                                {reservations.length === 1
+                                    ? "activity"
+                                    : "activities"}
+
                             </span>
 
                         </div>
@@ -757,82 +1582,164 @@ function StudentDashboard() {
                         <div className="professional-activity-list">
 
 
-                            <div className="professional-activity">
+                            {/* ERROR */}
 
-                                <div className="activity-circle success">
-                                    ✓
-                                </div>
+                            {reservationError && (
 
-                                <div className="activity-details">
+                                <div className="professional-activity">
 
-                                    <strong>
-                                        Seat A12 reserved successfully
-                                    </strong>
-
-                                    <span>
-                                        Your reservation was confirmed for
-                                        September 18, 2026.
-                                    </span>
-
-                                </div>
-
-                                <time>
-                                    Today
-                                </time>
-
-                            </div>
+                                    <div className="activity-circle booking">
+                                        !
+                                    </div>
 
 
-                            <div className="professional-activity">
+                                    <div className="activity-details">
 
-                                <div className="activity-circle payment">
-                                    ₹
-                                </div>
+                                        <strong>
+                                            Unable to load activity
+                                        </strong>
 
-                                <div className="activity-details">
 
-                                    <strong>
-                                        Membership payment completed
-                                    </strong>
+                                        <span>
+                                            {reservationError}
+                                        </span>
 
-                                    <span>
-                                        Premium Reader membership payment
-                                        was processed successfully.
-                                    </span>
+                                    </div>
 
                                 </div>
 
-                                <time>
-                                    5 days ago
-                                </time>
-
-                            </div>
+                            )}
 
 
-                            <div className="professional-activity">
+                            {/* LOADING */}
 
-                                <div className="activity-circle booking">
-                                    📚
-                                </div>
+                            {!reservationError &&
+                                loadingReservations && (
 
-                                <div className="activity-details">
+                                    <div className="professional-activity">
 
-                                    <strong>
-                                        Previous reservation completed
-                                    </strong>
+                                        <div className="activity-circle booking">
+                                            ⏳
+                                        </div>
 
-                                    <span>
-                                        Your library study session was
-                                        completed successfully.
-                                    </span>
 
-                                </div>
+                                        <div className="activity-details">
 
-                                <time>
-                                    8 days ago
-                                </time>
+                                            <strong>
+                                                Loading reservations...
+                                            </strong>
 
-                            </div>
+
+                                            <span>
+                                                Fetching your latest
+                                                library activity.
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                )}
+
+
+                            {/* NO RESERVATIONS */}
+
+                            {!reservationError &&
+                                !loadingReservations &&
+                                reservations.length === 0 && (
+
+                                    <div className="professional-activity">
+
+                                        <div className="activity-circle booking">
+                                            📚
+                                        </div>
+
+
+                                        <div className="activity-details">
+
+                                            <strong>
+                                                No reservation activity yet
+                                            </strong>
+
+
+                                            <span>
+                                                Your library reservations
+                                                will appear here.
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                )}
+
+
+                            {/* RESERVATIONS */}
+
+                            {!reservationError &&
+                                !loadingReservations &&
+                                reservations.length > 0 && (
+
+                                    reservations
+                                        .slice(0, 3)
+                                        .map((reservation) => (
+
+                                            <div
+                                                className="professional-activity"
+                                                key={
+                                                    reservation._id
+                                                }
+                                            >
+
+                                                <div className="activity-circle success">
+                                                    ✓
+                                                </div>
+
+
+                                                <div className="activity-details">
+
+                                                    <strong>
+
+                                                        Seat{" "}
+                                                        {reservation.seatNumber}{" "}
+                                                        reservation
+
+                                                    </strong>
+
+
+                                                    <span>
+
+                                                        {reservation.purpose}
+                                                        {" · "}
+                                                        {reservation.startTime}
+                                                        {" - "}
+                                                        {reservation.endTime}
+
+                                                    </span>
+
+                                                </div>
+
+
+                                                <time>
+
+                                                    {new Date(
+                                                        reservation.reservationDate
+                                                    ).toLocaleDateString(
+                                                        "en-IN",
+                                                        {
+                                                            day: "numeric",
+                                                            month: "short",
+                                                            year: "numeric"
+                                                        }
+                                                    )}
+
+                                                </time>
+
+                                            </div>
+
+                                        ))
+
+                                )}
 
                         </div>
 
@@ -848,15 +1755,19 @@ function StudentDashboard() {
                 <footer className="dashboard-footer">
 
                     <div>
+
                         <strong>
                             📚 LibraSpace
                         </strong>
+
 
                         <span>
                             Smart Library Seat Reservation &
                             Membership System
                         </span>
+
                     </div>
+
 
                     <span>
                         © 2026 LibraSpace

@@ -1,304 +1,1904 @@
-/* ========================================
-   REGISTER PAGE
-======================================== */
+/* =========================================================
+   LIBRASPACE REGISTER PAGE
+   Interactive Light Violet + Blue Bubble Design
+   ========================================================= */
 
-.register-page {
+
+/* =========================================================
+   ROOT VARIABLES
+   ========================================================= */
+
+:root {
+
+    --primary: #2589A5;
+    --primary-dark: #176B87;
+    --primary-light: #3BA7B8;
+
+    --accent: #7CCED5;
+
+    --gold: #D6B56A;
+
+    --background: #FFFFFF;
+    --background-soft: #F4FAFB;
+
+    --card: #FFFFFF;
+
+    --text: #294653;
+    --text-light: #66808B;
+    --text-muted: #91A5AD;
+
+    --border: #D8E8EC;
+    --border-light: #E8F1F3;
+
+    --success: #65A77E;
+    --success-light: #EDF8F1;
+
+    --danger: #C97878;
+    --danger-light: #FBEFEF;
+
+    /* Bubble colors */
+
+    --bubble-violet: #C9B6FF;
+    --bubble-violet-light: #E8DEFF;
+
+    --bubble-blue: #8DDBE8;
+    --bubble-blue-light: #DDF6FA;
+
+    --bubble-pink: #F0C4E8;
+
+    --shadow:
+        0 20px 55px rgba(41, 70, 83, 0.10);
+
+    --shadow-hover:
+        0 25px 65px rgba(41, 70, 83, 0.16);
+
+    --mouse-x: 50%;
+    --mouse-y: 50%;
+}
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.auth-page {
+
     min-height: 100vh;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%;
 
     padding: 40px 20px;
 
-    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    box-sizing: border-box;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    position: relative;
+
+    overflow: hidden;
+
+    font-family:
+        "Inter",
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    background:
+        #FFFFFF;
+
+    color:
+        var(--text);
+}
+
+
+/* =========================================================
+   MOUSE FOLLOWING VIOLET GLOW
+   ========================================================= */
+
+.auth-page::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 520px;
+
+    height: 520px;
+
+    left: -180px;
+
+    top: -180px;
+
+    border-radius: 50%;
+
+    pointer-events: none;
 
     background:
         radial-gradient(
-            circle at 90% 10%,
-            rgba(117, 156, 137, 0.15),
-            transparent 30%
-        ),
-        linear-gradient(
-            135deg,
-            #edf5f0,
-            #ffffff
+            circle,
+            rgba(201, 182, 255, 0.42) 0%,
+            rgba(201, 182, 255, 0.27) 22%,
+            rgba(232, 222, 255, 0.20) 42%,
+            rgba(232, 222, 255, 0.08) 62%,
+            transparent 76%
+        );
+
+    filter:
+        blur(3px);
+
+    transform:
+        translate(
+            calc((var(--mouse-x) - 50%) * 0.38),
+            calc((var(--mouse-y) - 50%) * 0.38)
+        );
+
+    transition:
+        transform 0.7s cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
+        );
+
+    z-index: 0;
+}
+
+
+/* =========================================================
+   MOUSE FOLLOWING BLUE + GOLD GLOW
+   ========================================================= */
+
+.auth-page::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 480px;
+
+    height: 480px;
+
+    right: -170px;
+
+    bottom: -170px;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(141, 219, 232, 0.36) 0%,
+            rgba(141, 219, 232, 0.22) 25%,
+            rgba(214, 181, 106, 0.12) 48%,
+            rgba(214, 181, 106, 0.05) 65%,
+            transparent 78%
+        );
+
+    filter:
+        blur(3px);
+
+    transform:
+        translate(
+            calc((50% - var(--mouse-x)) * 0.30),
+            calc((50% - var(--mouse-y)) * 0.30)
+        );
+
+    transition:
+        transform 0.9s cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
+        );
+
+    z-index: 0;
+}
+
+
+/* =========================================================
+   FLOATING BUBBLE
+   ========================================================= */
+
+.floating-bubble {
+
+    position: absolute;
+
+    display: block;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+
+    z-index: 1;
+
+    opacity: 1;
+
+    mix-blend-mode: multiply;
+
+    transition:
+        transform 0.8s cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
         );
 }
 
 
-/* Register card */
+/* =========================================================
+   BUBBLE ONE - VIOLET
+   ========================================================= */
 
-.register-card {
-    width: 100%;
-    max-width: 460px;
+.bubble-one {
 
-    padding: 40px;
+    width: 150px;
 
-    background: #ffffff;
+    height: 150px;
 
-    border-radius: 20px;
+    top: 8%;
+
+    left: 8%;
+
+    background:
+        radial-gradient(
+            circle at 30% 25%,
+            #FFFFFF 0%,
+            #EEE7FF 15%,
+            #D8CAFF 38%,
+            #C2ABFF 62%,
+            rgba(194, 171, 255, 0.28) 76%,
+            transparent 78%
+        );
 
     box-shadow:
-        0 25px 70px rgba(36, 72, 63, 0.12);
+        0 15px 45px
+        rgba(139, 108, 218, 0.25),
+
+        inset -12px -14px 25px
+        rgba(139, 108, 218, 0.12),
+
+        inset 10px 8px 20px
+        rgba(255, 255, 255, 0.75);
+
+    animation:
+        bubbleOne 7s ease-in-out infinite;
 }
 
 
-/* Logo */
+/* =========================================================
+   BUBBLE TWO - PINK
+   ========================================================= */
 
-.register-logo {
+.bubble-two {
+
+    width: 85px;
+
+    height: 85px;
+
+    top: 18%;
+
+    right: 12%;
+
+    background:
+        radial-gradient(
+            circle at 28% 25%,
+            #FFFFFF 0%,
+            #F9E9F7 18%,
+            #F0C4E8 43%,
+            #DDB1DF 66%,
+            rgba(221, 177, 223, 0.25) 78%,
+            transparent 80%
+        );
+
+    box-shadow:
+        0 14px 35px
+        rgba(196, 127, 191, 0.22),
+
+        inset 8px 7px 16px
+        rgba(255, 255, 255, 0.7);
+
+    animation:
+        bubbleTwo 6s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   BUBBLE THREE - BLUE
+   ========================================================= */
+
+.bubble-three {
+
+    width: 110px;
+
+    height: 110px;
+
+    bottom: 12%;
+
+    left: 10%;
+
+    background:
+        radial-gradient(
+            circle at 30% 25%,
+            #FFFFFF 0%,
+            #E5F9FC 17%,
+            #BEECF3 40%,
+            #8DD9E7 63%,
+            rgba(141, 217, 231, 0.25) 78%,
+            transparent 80%
+        );
+
+    box-shadow:
+        0 15px 40px
+        rgba(70, 169, 190, 0.20),
+
+        inset 8px 7px 18px
+        rgba(255, 255, 255, 0.72);
+
+    animation:
+        bubbleThree 8s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   BUBBLE FOUR - VIOLET + BLUE
+   ========================================================= */
+
+.bubble-four {
+
+    width: 180px;
+
+    height: 180px;
+
+    right: 6%;
+
+    bottom: 8%;
+
+    background:
+        radial-gradient(
+            circle at 30% 25%,
+            #FFFFFF 0%,
+            #E8F7FA 15%,
+            #C7EAF0 33%,
+            #C9B6FF 58%,
+            #B09AFF 70%,
+            rgba(176, 154, 255, 0.20) 80%,
+            transparent 82%
+        );
+
+    box-shadow:
+        0 20px 55px
+        rgba(117, 100, 205, 0.20),
+
+        inset 10px 10px 24px
+        rgba(255, 255, 255, 0.75);
+
+    animation:
+        bubbleFour 9s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   BUBBLE HIGHLIGHT
+   ========================================================= */
+
+.bubble-four::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 25px;
+
+    height: 25px;
+
+    top: 25px;
+
+    left: 30px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.65);
+
+    filter:
+        blur(2px);
+}
+
+
+/* =========================================================
+   BUBBLE ANIMATIONS
+   ========================================================= */
+
+@keyframes bubbleOne {
+
+    0%,
+    100% {
+        transform:
+            translate3d(0, 0, 0)
+            scale(1);
+    }
+
+    25% {
+        transform:
+            translate3d(12px, -18px, 0)
+            scale(1.03);
+    }
+
+    50% {
+        transform:
+            translate3d(25px, -8px, 0)
+            scale(0.98);
+    }
+
+    75% {
+        transform:
+            translate3d(10px, 12px, 0)
+            scale(1.02);
+    }
+}
+
+
+@keyframes bubbleTwo {
+
+    0%,
+    100% {
+        transform:
+            translate3d(0, 0, 0)
+            scale(1);
+    }
+
+    50% {
+        transform:
+            translate3d(-20px, 25px, 0)
+            scale(1.08);
+    }
+}
+
+
+@keyframes bubbleThree {
+
+    0%,
+    100% {
+        transform:
+            translate3d(0, 0, 0)
+            scale(1);
+    }
+
+    50% {
+        transform:
+            translate3d(28px, -20px, 0)
+            scale(1.05);
+    }
+}
+
+
+@keyframes bubbleFour {
+
+    0%,
+    100% {
+        transform:
+            translate3d(0, 0, 0)
+            scale(1);
+    }
+
+    30% {
+        transform:
+            translate3d(-18px, -15px, 0)
+            scale(1.03);
+    }
+
+    60% {
+        transform:
+            translate3d(-28px, 12px, 0)
+            scale(0.97);
+    }
+}
+
+
+/* =========================================================
+   REGISTER CARD
+   ========================================================= */
+
+.auth-card {
+
+    width: 100%;
+
+    max-width: 470px;
+
+    padding: 38px 44px 30px;
+
+    box-sizing: border-box;
+
+    position: relative;
+
+    z-index: 5;
+
+    background:
+        rgba(255, 255, 255, 0.97);
+
+    border:
+        1px solid
+        rgba(216, 232, 236, 0.95);
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 25px 65px
+        rgba(41, 70, 83, 0.13);
+
+    backdrop-filter:
+        blur(16px);
+
+    -webkit-backdrop-filter:
+        blur(16px);
+
+    animation:
+        registerCardAppear 0.65s ease;
+
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease;
+}
+
+
+.auth-card:hover {
+
+    transform:
+        translateY(-3px);
+
+    box-shadow:
+        0 30px 75px
+        rgba(41, 70, 83, 0.17);
+}
+
+
+/* =========================================================
+   GOLD TOP LINE
+   ========================================================= */
+
+.auth-card::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    width: 90px;
+
+    height: 3px;
+
+    border-radius:
+        0 0 8px 8px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--gold),
+            #E9D49B,
+            var(--gold)
+        );
+}
+
+
+/* =========================================================
+   CARD DECORATIVE BUBBLE
+   ========================================================= */
+
+.auth-card::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 110px;
+
+    height: 110px;
+
+    right: -55px;
+
+    top: 65px;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(201, 182, 255, 0.30),
+            rgba(201, 182, 255, 0.10) 48%,
+            transparent 72%
+        );
+
+    animation:
+        cardBubble 5s ease-in-out infinite;
+}
+
+
+@keyframes cardBubble {
+
+    0%,
+    100% {
+        transform:
+            translate3d(0, 0, 0);
+    }
+
+    50% {
+        transform:
+            translate3d(-18px, 18px, 0);
+    }
+}
+
+
+/* =========================================================
+   CARD APPEAR
+   ========================================================= */
+
+@keyframes registerCardAppear {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(25px)
+            scale(0.97);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+
+/* =========================================================
+   LOGO
+   ========================================================= */
+
+.auth-logo {
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
-    gap: 8px;
+    gap: 10px;
 
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 
-    color: #24483f;
+    color:
+        var(--primary-dark);
 
-    font-size: 25px;
+    font-size: 24px;
+
     font-weight: 800;
+
+    letter-spacing:
+        -0.5px;
 }
 
-.register-logo-icon {
-    font-size: 29px;
+
+.logo-icon {
+
+    width: 43px;
+
+    height: 43px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #F0EAFF,
+            #E4D9FF
+        );
+
+    border:
+        1px solid
+        #D5C7FF;
+
+    box-shadow:
+        0 7px 18px
+        rgba(139, 108, 218, 0.15);
+
+    font-size: 22px;
+
+    animation:
+        logoFloat 4s ease-in-out infinite;
 }
 
 
-/* Heading */
+@keyframes logoFloat {
 
-.register-card h1 {
-    margin: 0 0 9px;
+    0%,
+    100% {
+        transform:
+            translateY(0);
+    }
+
+    50% {
+        transform:
+            translateY(-3px);
+    }
+}
+
+
+.auth-logo > span:last-child {
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--primary-dark),
+            var(--primary-light)
+        );
+
+    -webkit-background-clip: text;
+
+    -webkit-text-fill-color: transparent;
+
+    background-clip: text;
+}
+
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.auth-card h1 {
+
+    margin: 0;
 
     text-align: center;
 
-    color: #203b34;
+    color:
+        var(--text);
 
     font-size: 29px;
+
+    line-height: 1.25;
+
+    font-weight: 800;
+
+    letter-spacing:
+        -0.8px;
 }
 
-.register-subtitle {
-    margin: 0 0 28px;
+
+/* =========================================================
+   SUBTITLE
+   ========================================================= */
+
+.auth-subtitle {
+
+    max-width: 390px;
+
+    margin:
+        9px auto 24px;
 
     text-align: center;
 
-    color: #7b8581;
+    color:
+        var(--text-light);
 
     font-size: 13px;
 
-    line-height: 1.7;
+    line-height: 1.6;
 }
 
 
-/* Form */
+/* =========================================================
+   FORM
+   ========================================================= */
 
-.register-form-group {
-    margin-bottom: 16px;
+.auth-card form {
+
+    width: 100%;
 }
 
-.register-form-group label {
+
+/* =========================================================
+   FORM GROUP
+   ========================================================= */
+
+.form-group {
+
+    margin-bottom: 14px;
+}
+
+
+.form-group label {
+
     display: block;
 
-    margin-bottom: 7px;
+    margin-bottom: 6px;
 
-    color: #34453f;
+    color:
+        var(--text);
 
-    font-size: 13px;
+    font-size: 12px;
+
     font-weight: 700;
 }
 
-.register-form-group input {
+
+/* =========================================================
+   INPUT WRAPPER
+   ========================================================= */
+
+.input-wrapper {
+
+    position: relative;
+
+    width: 100%;
+}
+
+
+/* =========================================================
+   INPUT ICON
+   ========================================================= */
+
+.input-icon {
+
+    position: absolute;
+
+    top: 50%;
+
+    left: 14px;
+
+    transform:
+        translateY(-50%);
+
+    width: 22px;
+
+    height: 22px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color:
+        var(--primary);
+
+    font-size: 14px;
+
+    pointer-events: none;
+
+    z-index: 2;
+
+    transition:
+        transform 0.25s ease,
+        color 0.25s ease;
+}
+
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+
+.form-group input {
+
     width: 100%;
 
-    padding: 13px 14px;
+    height: 47px;
 
-    border: 1px solid #dce3df;
+    box-sizing: border-box;
 
-    border-radius: 9px;
+    padding:
+        0 15px 0 43px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 10px;
 
     outline: none;
 
-    color: #333;
+    background:
+        #FFFFFF;
 
-    font-size: 14px;
+    color:
+        var(--text);
 
-    transition: 0.3s;
+    font-family:
+        "Inter",
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size: 13px;
+
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease;
 }
 
-.register-form-group input:focus {
-    border-color: #759c89;
+
+.form-group input::placeholder {
+
+    color:
+        var(--text-muted);
+}
+
+
+.form-group input:hover {
+
+    border-color:
+        #BFDDE3;
+}
+
+
+.form-group input:focus {
+
+    border-color:
+        var(--primary-light);
 
     box-shadow:
-        0 0 0 3px rgba(117, 156, 137, 0.12);
+        0 0 0 4px
+        rgba(59, 167, 184, 0.12);
+
+    transform:
+        translateY(-1px);
 }
 
 
-/* Register button */
+.input-wrapper:focus-within .input-icon {
 
-.register-submit {
+    color:
+        var(--primary-dark);
+
+    transform:
+        translateY(-50%)
+        scale(1.08);
+}
+
+
+/* =========================================================
+   PASSWORD WRAPPER
+   ========================================================= */
+
+.password-wrapper {
+
+    position: relative;
+
     width: 100%;
+}
+
+
+.password-wrapper input {
+
+    padding-right:
+        52px;
+}
+
+
+/* =========================================================
+   PASSWORD EYE
+   ========================================================= */
+
+.password-eye {
+
+    position: absolute;
+
+    top: 50%;
+
+    right: 5px;
+
+    width: 38px;
+
+    height: 38px;
+
+    transform:
+        translateY(-50%);
+
+    border: none;
+
+    border-radius: 8px;
+
+    background:
+        transparent;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 16px;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.password-eye:hover {
+
+    background:
+        #F1F7F8;
+
+    transform:
+        translateY(-50%)
+        scale(1.06);
+}
+
+
+.password-eye:active {
+
+    transform:
+        translateY(-50%)
+        scale(0.94);
+}
+
+
+/* =========================================================
+   SUCCESS MESSAGE
+   ========================================================= */
+
+.success-message {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    margin-bottom: 15px;
+
+    padding:
+        10px 13px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    border:
+        1px solid
+        #C7E6D0;
+
+    border-radius: 9px;
+
+    background:
+        var(--success-light);
+
+    color:
+        #4D8B65;
+
+    font-size: 12px;
+
+    line-height: 1.4;
+
+    font-weight: 600;
+
+    animation:
+        messageAppear 0.25s ease;
+}
+
+
+/* =========================================================
+   ERROR MESSAGE
+   ========================================================= */
+
+.error-message {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    margin-bottom: 15px;
+
+    padding:
+        10px 13px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    border:
+        1px solid
+        #EACACA;
+
+    border-radius: 9px;
+
+    background:
+        var(--danger-light);
+
+    color:
+        #A85656;
+
+    font-size: 12px;
+
+    line-height: 1.4;
+
+    font-weight: 600;
+
+    animation:
+        messageAppear 0.25s ease;
+}
+
+
+.message-icon {
+
+    width: 21px;
+
+    height: 21px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    font-size: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.65);
+}
+
+
+@keyframes messageAppear {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(-6px);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+}
+
+
+/* =========================================================
+   REGISTER BUTTON
+   ========================================================= */
+
+.auth-btn {
+
+    width: 100%;
+
+    height: 49px;
 
     margin-top: 5px;
 
-    padding: 14px;
-
     border: none;
-    border-radius: 9px;
 
-    background: #24483f;
+    border-radius: 10px;
 
-    color: #ffffff;
+    background:
+        linear-gradient(
+            135deg,
+            var(--primary-dark),
+            var(--primary)
+        );
 
-    font-size: 14px;
-    font-weight: 700;
+    color:
+        #FFFFFF;
+
+    font-family:
+        "Inter",
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+    letter-spacing:
+        0.2px;
 
     cursor: pointer;
 
-    transition: 0.3s;
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 9px;
+
+    box-shadow:
+        0 8px 20px
+        rgba(37, 137, 165, 0.22);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        background 0.25s ease;
 }
 
-.register-submit:hover {
-    background: #18372f;
 
-    transform: translateY(-1px);
+.auth-btn:hover:not(:disabled) {
+
+    transform:
+        translateY(-2px);
+
+    background:
+        linear-gradient(
+            135deg,
+            #155F78,
+            #2589A5
+        );
+
+    box-shadow:
+        0 13px 28px
+        rgba(37, 137, 165, 0.30);
 }
 
 
-/* Login switch */
+.auth-btn:active:not(:disabled) {
 
-.register-switch {
-    margin: 23px 0 0;
+    transform:
+        translateY(0);
+}
+
+
+.auth-btn:disabled {
+
+    opacity:
+        0.65;
+
+    cursor:
+        not-allowed;
+
+    box-shadow:
+        none;
+}
+
+
+/* =========================================================
+   BUTTON ARROW
+   ========================================================= */
+
+.login-arrow {
+
+    font-size: 18px;
+
+    line-height: 1;
+
+    transition:
+        transform 0.25s ease;
+}
+
+
+.auth-btn:hover:not(:disabled)
+.login-arrow {
+
+    transform:
+        translateX(4px);
+}
+
+
+/* =========================================================
+   LOADING SPINNER
+   ========================================================= */
+
+.loading-spinner {
+
+    width: 15px;
+
+    height: 15px;
+
+    border:
+        2px solid
+        rgba(255, 255, 255, 0.35);
+
+    border-top-color:
+        #FFFFFF;
+
+    border-radius: 50%;
+
+    animation:
+        registerSpin 0.7s linear infinite;
+}
+
+
+@keyframes registerSpin {
+
+    to {
+
+        transform:
+            rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   LOGIN SWITCH
+   ========================================================= */
+
+.auth-switch {
+
+    margin:
+        17px 0 0;
 
     text-align: center;
 
-    color: #7b8581;
+    color:
+        var(--text-light);
 
-    font-size: 13px;
-}
+    font-size: 12px;
 
-.register-switch a {
-    color: #24483f;
-
-    font-weight: 700;
+    line-height: 1.5;
 }
 
 
-/* Back home */
+.auth-switch a {
 
-.register-back-home {
+    color:
+        var(--primary-dark);
+
+    font-weight: 800;
+
+    text-decoration: none;
+
+    transition:
+        color 0.2s ease;
+}
+
+
+.auth-switch a:hover {
+
+    color:
+        var(--primary-light);
+
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   BACK HOME
+   ========================================================= */
+
+.back-home {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    width: fit-content;
+
+    margin:
+        13px auto 0;
+
+    padding:
+        6px 11px;
+
+    border-radius: 8px;
+
+    color:
+        var(--text-muted);
+
+    text-decoration: none;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    transition:
+        color 0.2s ease,
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.back-home:hover {
+
+    color:
+        var(--primary-dark);
+
+    background:
+        var(--background-soft);
+
+    transform:
+        translateX(-3px);
+}
+
+
+.back-home span {
+
+    font-size: 14px;
+
+    transition:
+        transform 0.2s ease;
+}
+
+
+.back-home:hover span {
+
+    transform:
+        translateX(-3px);
+}
+
+
+/* =========================================================
+   BOTTOM DECORATION
+   ========================================================= */
+
+.auth-decoration {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    margin-top: 13px;
+}
+
+
+.auth-decoration span {
+
     display: block;
 
-    margin-top: 17px;
+    width: 5px;
 
-    text-align: center;
+    height: 5px;
 
-    color: #688f7f;
+    border-radius: 50%;
 
-    font-size: 13px;
+    background:
+        #D8E8EC;
+
+    transition:
+        background 0.25s ease,
+        transform 0.25s ease;
 }
 
-.register-back-home:hover {
-    color: #24483f;
+
+.auth-decoration span:nth-child(2) {
+
+    width: 7px;
+
+    height: 7px;
+
+    background:
+        var(--gold);
 }
 
 
-/* Responsive */
+.auth-card:hover
+.auth-decoration span {
+
+    background:
+        var(--accent);
+
+    transform:
+        translateY(-2px);
+}
+
+
+.auth-card:hover
+.auth-decoration span:nth-child(2) {
+
+    background:
+        var(--gold);
+
+    transform:
+        translateY(-3px);
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    .auth-page {
+
+        padding:
+            30px 18px;
+    }
+
+
+    .auth-card {
+
+        max-width:
+            450px;
+
+        padding:
+            36px 34px 28px;
+    }
+
+
+    .auth-card h1 {
+
+        font-size:
+            27px;
+    }
+
+
+    .bubble-one {
+
+        width:
+            115px;
+
+        height:
+            115px;
+    }
+
+
+    .bubble-four {
+
+        width:
+            140px;
+
+        height:
+            140px;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
 @media (max-width: 500px) {
 
-    .register-page {
-        padding: 25px 15px;
+    .auth-page {
+
+        padding:
+            20px 14px;
     }
 
-    .register-card {
-        padding: 30px 22px;
+
+    .auth-card {
+
+        width:
+            100%;
+
+        padding:
+            32px 22px 25px;
+
+        border-radius:
+            18px;
     }
 
-    .register-card h1 {
-        font-size: 26px;
+
+    .auth-logo {
+
+        font-size:
+            21px;
+
+        margin-bottom:
+            17px;
+    }
+
+
+    .logo-icon {
+
+        width:
+            39px;
+
+        height:
+            39px;
+
+        font-size:
+            19px;
+    }
+
+
+    .auth-card h1 {
+
+        font-size:
+            24px;
+    }
+
+
+    .auth-subtitle {
+
+        margin:
+            8px auto 22px;
+
+        font-size:
+            12px;
+    }
+
+
+    .form-group {
+
+        margin-bottom:
+            13px;
+    }
+
+
+    .form-group input {
+
+        height:
+            46px;
+
+        font-size:
+            13px;
+    }
+
+
+    .auth-btn {
+
+        height:
+            48px;
+
+        font-size:
+            13px;
+    }
+
+
+    .auth-switch {
+
+        margin-top:
+            16px;
+    }
+
+
+    .back-home {
+
+        margin-top:
+            12px;
+    }
+
+
+    .bubble-one {
+
+        width:
+            85px;
+
+        height:
+            85px;
+
+        top:
+            5%;
+
+        left:
+            -15px;
+    }
+
+
+    .bubble-two {
+
+        width:
+            55px;
+
+        height:
+            55px;
+
+        right:
+            -5px;
+    }
+
+
+    .bubble-three {
+
+        width:
+            70px;
+
+        height:
+            70px;
+
+        left:
+            -10px;
+    }
+
+
+    .bubble-four {
+
+        width:
+            105px;
+
+        height:
+            105px;
+
+        right:
+            -20px;
     }
 }
 
-/* ========================================
-   PASSWORD FIELD
-======================================== */
 
-.password-wrapper {
-    position: relative;
-    width: 100%;
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 360px) {
+
+    .auth-page {
+
+        padding:
+            14px 10px;
+    }
+
+
+    .auth-card {
+
+        padding:
+            29px 18px 23px;
+    }
+
+
+    .auth-card h1 {
+
+        font-size:
+            22px;
+    }
+
+
+    .auth-logo {
+
+        font-size:
+            19px;
+    }
+
+
+    .logo-icon {
+
+        width:
+            36px;
+
+        height:
+            36px;
+
+        font-size:
+            17px;
+    }
+
+
+    .auth-subtitle {
+
+        font-size:
+            11px;
+    }
+
+
+    .form-group label {
+
+        font-size:
+            11px;
+    }
+
+
+    .form-group input {
+
+        height:
+            44px;
+
+        padding-left:
+            41px;
+    }
+
+
+    .auth-btn {
+
+        height:
+            46px;
+    }
+
+
+    .bubble-one {
+
+        width:
+            65px;
+
+        height:
+            65px;
+    }
+
+
+    .bubble-two {
+
+        width:
+            45px;
+
+        height:
+            45px;
+    }
+
+
+    .bubble-three {
+
+        width:
+            55px;
+
+        height:
+            55px;
+    }
+
+
+    .bubble-four {
+
+        width:
+            80px;
+
+        height:
+            80px;
+    }
 }
 
-.password-wrapper input {
-    width: 100%;
-    padding-right: 48px;
-}
 
-.password-eye {
-    position: absolute;
-    top: 50%;
-    right: 14px;
-    transform: translateY(-50%);
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
 
-    width: 30px;
-    height: 30px;
+.auth-btn:focus-visible,
+.password-eye:focus-visible,
+.auth-switch a:focus-visible,
+.back-home:focus-visible {
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    outline:
+        3px solid
+        rgba(59, 167, 184, 0.28);
 
-    padding: 0;
-    border: none;
-    background: transparent;
-
-    cursor: pointer;
-
-    font-size: 17px;
-
-    opacity: 0.65;
-
-    transition: 0.2s;
-}
-
-.password-eye:hover {
-    opacity: 1;
-    transform: translateY(-50%) scale(1.08);
+    outline-offset:
+        3px;
 }
 
 
-/* ========================================
-   SUCCESS MESSAGE
-======================================== */
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
 
-.success-message {
-    margin-bottom: 18px;
-    padding: 12px 14px;
+@media (prefers-reduced-motion: reduce) {
 
-    border: 1px solid #c8e6d2;
-    border-radius: 8px;
+    .auth-page::before,
+    .auth-page::after,
+    .floating-bubble,
+    .auth-card,
+    .auth-card::after,
+    .logo-icon,
+    .success-message,
+    .error-message,
+    .loading-spinner {
 
-    background: #edf8f1;
-    color: #32734a;
+        animation:
+            none !important;
 
-    font-size: 13px;
-    font-weight: 600;
-}
-
-
-/* ========================================
-   ERROR MESSAGE
-======================================== */
-
-.error-message {
-    margin-bottom: 18px;
-    padding: 12px 14px;
-
-    border: 1px solid #f0caca;
-    border-radius: 8px;
-
-    background: #fff1f1;
-    color: #b33a3a;
-
-    font-size: 13px;
-    font-weight: 600;
+        transition:
+            none !important;
+    }
 }
