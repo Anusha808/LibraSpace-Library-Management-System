@@ -8,11 +8,21 @@ const protect =
 const {
     getMyPayments,
     createPayment,
-    getPaymentById
-} = require("../controllers/paymentController");
+    getPaymentById,
+    createRazorpayOrder,
+    verifyRazorpayPayment,
+    markPaymentFailed
+} = require(
+    "../controllers/paymentController"
+);
 
 
+// =========================================================
 // GET MY PAYMENT HISTORY
+// =========================================================
+// GET /api/payments/my
+// =========================================================
+
 router.get(
     "/my",
     protect,
@@ -20,7 +30,53 @@ router.get(
 );
 
 
-// CREATE PAYMENT
+// =========================================================
+// CREATE RAZORPAY ORDER
+// =========================================================
+// POST /api/payments/create-order
+// =========================================================
+
+router.post(
+    "/create-order",
+    protect,
+    createRazorpayOrder
+);
+
+
+// =========================================================
+// VERIFY RAZORPAY PAYMENT
+// =========================================================
+// POST /api/payments/verify
+// =========================================================
+
+router.post(
+    "/verify",
+    protect,
+    verifyRazorpayPayment
+);
+
+
+// =========================================================
+// MARK PAYMENT FAILED
+// =========================================================
+// POST /api/payments/failed
+// =========================================================
+
+router.post(
+    "/failed",
+    protect,
+    markPaymentFailed
+);
+
+
+// =========================================================
+// CREATE MANUAL PAYMENT
+// =========================================================
+// POST /api/payments
+//
+// Existing API retained for compatibility.
+// =========================================================
+
 router.post(
     "/",
     protect,
@@ -28,7 +84,12 @@ router.post(
 );
 
 
+// =========================================================
 // GET SINGLE PAYMENT
+// =========================================================
+// GET /api/payments/:id
+// =========================================================
+
 router.get(
     "/:id",
     protect,

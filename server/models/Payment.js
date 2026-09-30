@@ -8,12 +8,48 @@ const paymentSchema = new mongoose.Schema(
             required: true
         },
 
+        // =====================================================
+        // TRANSACTION INFORMATION
+        // =====================================================
+
         transactionId: {
             type: String,
             required: true,
             unique: true,
             trim: true
         },
+
+        razorpayOrderId: {
+            type: String,
+            default: "",
+            trim: true
+        },
+
+        razorpayPaymentId: {
+            type: String,
+            default: "",
+            trim: true
+        },
+
+        razorpaySignature: {
+            type: String,
+            default: "",
+            trim: true
+        },
+
+        // =====================================================
+        // MEMBERSHIP PLAN
+        // =====================================================
+
+        planId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "MembershipPlan",
+            default: null
+        },
+
+        // =====================================================
+        // PAYMENT DETAILS
+        // =====================================================
 
         description: {
             type: String,
@@ -35,7 +71,8 @@ const paymentSchema = new mongoose.Schema(
 
         amount: {
             type: Number,
-            required: true
+            required: true,
+            min: 0
         },
 
         status: {
@@ -45,13 +82,17 @@ const paymentSchema = new mongoose.Schema(
                 "Pending",
                 "Failed"
             ],
-            default: "Successful"
+            default: "Pending"
         },
 
         paymentDate: {
             type: Date,
             default: Date.now
         },
+
+        // =====================================================
+        // MEMBERSHIP
+        // =====================================================
 
         membership: {
             type: mongoose.Schema.Types.ObjectId,

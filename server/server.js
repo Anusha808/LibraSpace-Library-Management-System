@@ -2,7 +2,23 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
+// ==========================================================
+// LOAD ENVIRONMENT VARIABLES FIRST
+// ==========================================================
+//
+// This MUST happen before importing routes/controllers
+// that use process.env values such as Razorpay credentials.
+//
+
+dotenv.config();
+
+
+// ==========================================================
+// DATABASE
+// ==========================================================
+
 const connectDB = require("./config/db");
+
 
 // ==========================================================
 // ROUTES
@@ -31,13 +47,6 @@ const seatRoutes =
 
 const settingsRoutes =
     require("./routes/settingsRoutes");
-
-
-// ==========================================================
-// LOAD ENVIRONMENT VARIABLES
-// ==========================================================
-
-dotenv.config();
 
 
 // ==========================================================
@@ -139,9 +148,14 @@ app.use(
 // PAYMENT ROUTES
 // ==========================================================
 //
+// GET  /api/payments/my
+// POST /api/payments
+// GET  /api/payments/:id
+//
+// Razorpay:
 // POST /api/payments/create-order
 // POST /api/payments/verify
-// GET  /api/payments/my
+// POST /api/payments/failed
 //
 // ==========================================================
 
@@ -190,16 +204,9 @@ app.use(
 // ADMIN SEAT ROUTES
 // ==========================================================
 //
-// Get all seats:
-// GET /api/admin/seats
-//
-// Add seat:
-// POST /api/admin/seats
-//
-// Change status:
-// PATCH /api/admin/seats/:id/status
-//
-// Delete seat:
+// GET    /api/admin/seats
+// POST   /api/admin/seats
+// PATCH  /api/admin/seats/:id/status
 // DELETE /api/admin/seats/:id
 //
 // ==========================================================
@@ -214,13 +221,8 @@ app.use(
 // ADMIN SETTINGS ROUTES
 // ==========================================================
 //
-// Get settings:
 // GET /api/admin/settings
-//
-// Update settings:
 // PUT /api/admin/settings
-//
-// Change admin password:
 // PUT /api/admin/settings/password
 //
 // ==========================================================
@@ -239,11 +241,13 @@ app.get(
     "/",
     (req, res) => {
 
-        res.json({
+        res.status(200).json({
+
             success: true,
 
             message:
                 "LibraSpace Backend is running successfully!"
+
         });
 
     }
@@ -282,7 +286,6 @@ app.use(
             err
         );
 
-
         res.status(
             err.status || 500
         ).json({
@@ -300,7 +303,7 @@ app.use(
 
 
 // ==========================================================
-// SERVER
+// START SERVER
 // ==========================================================
 
 const PORT =
@@ -313,6 +316,13 @@ app.listen(
 
         console.log(
             `Server running on http://localhost:${PORT}`
+        );
+
+        console.log(
+            "Razorpay Key ID loaded:",
+            process.env.RAZORPAY_KEY_ID
+                ? "YES"
+                : "NO"
         );
 
     }
