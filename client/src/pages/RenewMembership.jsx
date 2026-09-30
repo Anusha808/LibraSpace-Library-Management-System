@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+
 import "./RenewMembership.css";
 
 function RenewMembership() {
@@ -8,9 +9,12 @@ function RenewMembership() {
 
     const API_BASE_URL = "http://localhost:5000";
 
+    // =====================================================
+    // STATES
+    // =====================================================
+
     const [plans, setPlans] = useState([]);
     const [selectedPlan, setSelectedPlan] = useState(null);
-
     const [membership, setMembership] = useState(null);
 
     const [loading, setLoading] = useState(true);
@@ -19,9 +23,247 @@ function RenewMembership() {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-    // ==========================================
-    // LOAD PLANS + MEMBERSHIP
-    // ==========================================
+
+    // =====================================================
+    // GET TOKEN
+    // =====================================================
+
+    const getToken = () => {
+        return localStorage.getItem("token");
+    };
+
+
+    // =====================================================
+    // GET CURRENT USER
+    // =====================================================
+
+    const getCurrentUser = () => {
+
+        try {
+
+            const savedUser = localStorage.getItem("user");
+
+            if (savedUser) {
+                return JSON.parse(savedUser);
+            }
+
+        } catch (err) {
+
+            console.error(
+                "Unable to read saved user:",
+                err
+            );
+        }
+
+        return null;
+    };
+
+
+    // =====================================================
+    // LOAD RAZORPAY SCRIPT
+    // =====================================================
+
+    const loadRazorpayScript = () => {
+
+        return new Promise((resolve) => {
+
+            if (typeof window.Razorpay === "function") {
+                resolve(true);
+                return;
+            }
+
+            const existingScript =
+                document.querySelector(
+                    'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+                );
+
+            if (existingScript) {
+
+                const checkLoaded = () => {
+
+                    if (
+                        typeof window.Razorpay ===
+                        "function"
+                    ) {
+                        cleanup();
+                        resolve(true);
+                    }
+                };
+
+                const handleError = () => {
+                    cleanup();
+                    resolve(false);
+                };
+
+                const cleanup = () => {
+
+                    existingScript.removeEventListener(
+                        "load",
+                        checkLoaded
+                    );
+
+                    existingScript.removeEventListener(
+                        "error",
+                        handleError
+                    );
+                };
+
+                existingScript.addEventListener(
+                    "load",
+                    checkLoaded
+                );
+
+                existingScript.addEventListener(
+                    "error",
+                    handleError
+                );
+
+                // In case it has already finished loading
+                setTimeout(checkLoaded, 100);
+
+                return;
+            }
+
+            const script = document.createElement("script");
+
+            script.src =
+                "https://checkout.razorpay.com/v1/checkout.js";
+
+            script.async = true;
+
+            script.onload = () => {
+                resolve(true);
+            };
+
+            script.onerror = () => {
+                resolve(false);
+            };
+
+            document.body.appendChild(script);
+        });
+    };
+
+
+    // =====================================================
+    // LOAD MEMBERSHIP PLANS
+    // =====================================================
+
+    const loadPlans = async (token) => {
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/membership-plans`,
+            {
+                method: "GET",
+
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+
+                cache: "no-store"
+            }
+        );
+
+        const data = await response.json();
+
+        console.log(
+            "Membership plans response:",
+            data
+        );
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load membership plans."
+            );
+        }
+
+        const fetchedPlans =
+            Array.isArray(data.plans)
+                ? data.plans
+                : [];
+
+        setPlans(fetchedPlans);
+
+        if (fetchedPlans.length > 0) {
+            setSelectedPlan(fetchedPlans[0]);
+        }
+
+        return fetchedPlans;
+    };
+
+
+    // =====================================================
+    // LOAD CURRENT MEMBERSHIP
+    // =====================================================
+
+    const loadMembership = async (token) => {
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/memberships/my`,
+            {
+                method: "GET",
+
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+
+                cache: "no-store"
+            }
+        );
+
+        const data = await response.json();
+
+        console.log(
+            "Current membership response:",
+            data
+        );
+
+        /*
+         * Supported response:
+         *
+         * {
+         *   success: true,
+         *   membership: {...}
+         * }
+         *
+         * or:
+         *
+         * {
+         *   success: true,
+         *   membership: null
+         * }
+         */
+
+        if (
+            response.ok ||
+            response.status === 404
+        ) {
+
+            const currentMembership =
+                data.membership ||
+                data.data?.membership ||
+                null;
+
+            setMembership(
+                currentMembership
+            );
+
+            return currentMembership;
+        }
+
+        throw new Error(
+            data.message ||
+            "Unable to load membership details."
+        );
+    };
+
+
+    // =====================================================
+    // LOAD PAGE DATA
+    // =====================================================
 
     useEffect(() => {
 
@@ -31,109 +273,23 @@ function RenewMembership() {
 
                 setLoading(true);
                 setError("");
+                setMessage("");
 
-                const token =
-                    localStorage.getItem("token");
+                const token = getToken();
 
                 if (!token) {
 
                     setError(
-                        "Please login to renew your membership."
+                        "Please login to continue."
                     );
 
                     return;
                 }
 
-
-                // ==========================================
-                // GET MEMBERSHIP PLANS
-                // ==========================================
-
-                const plansResponse =
-                    await fetch(
-                        `${API_BASE_URL}/api/membership-plans`,
-                        {
-                            method: "GET",
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`,
-                                "Content-Type":
-                                    "application/json"
-                            },
-                            cache: "no-store"
-                        }
-                    );
-
-
-                const plansData =
-                    await plansResponse.json();
-
-
-                if (!plansResponse.ok) {
-
-                    throw new Error(
-                        plansData.message ||
-                        "Unable to load membership plans."
-                    );
-                }
-
-
-                const fetchedPlans =
-                    plansData.plans || [];
-
-
-                setPlans(fetchedPlans);
-
-
-                // Select first plan automatically
-                if (fetchedPlans.length > 0) {
-
-                    setSelectedPlan(
-                        fetchedPlans[0]
-                    );
-                }
-
-
-                // ==========================================
-                // GET CURRENT MEMBERSHIP
-                // ==========================================
-
-                const membershipResponse =
-                    await fetch(
-                        `${API_BASE_URL}/api/memberships/my`,
-                        {
-                            method: "GET",
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`,
-                                "Content-Type":
-                                    "application/json"
-                            },
-                            cache: "no-store"
-                        }
-                    );
-
-
-                const membershipData =
-                    await membershipResponse.json();
-
-
-                if (membershipResponse.ok) {
-
-                    setMembership(
-                        membershipData.membership ||
-                        null
-                    );
-
-                } else if (
-                    membershipResponse.status !== 404
-                ) {
-
-                    throw new Error(
-                        membershipData.message ||
-                        "Unable to load membership details."
-                    );
-                }
+                await Promise.all([
+                    loadPlans(token),
+                    loadMembership(token)
+                ]);
 
             } catch (err) {
 
@@ -153,31 +309,34 @@ function RenewMembership() {
             }
         };
 
-
         loadData();
 
     }, []);
 
 
-    // ==========================================
+    // =====================================================
     // FORMAT PRICE
-    // ==========================================
+    // =====================================================
 
     const formatPrice = (price) => {
 
-        return Number(price || 0)
-            .toLocaleString("en-IN");
+        const value = Number(price || 0);
+
+        if (!Number.isFinite(value)) {
+            return "0";
+        }
+
+        return value.toLocaleString("en-IN");
     };
 
 
-    // ==========================================
+    // =====================================================
     // FORMAT DURATION
-    // ==========================================
+    // =====================================================
 
     const formatDuration = (days) => {
 
-        const duration =
-            Number(days || 0);
+        const duration = Number(days || 0);
 
         if (duration === 1) {
             return "1 Day";
@@ -207,9 +366,9 @@ function RenewMembership() {
     };
 
 
-    // ==========================================
+    // =====================================================
     // CALCULATE NEW EXPIRY DATE
-    // ==========================================
+    // =====================================================
 
     const calculateExpiryDate = () => {
 
@@ -217,45 +376,52 @@ function RenewMembership() {
             return null;
         }
 
+        let startDate = new Date();
 
-        let startDate =
-            new Date();
-
+        /*
+         * For an active membership that has not expired,
+         * extend from the current expiry date.
+         */
 
         if (
             membership &&
             membership.status === "active" &&
-            new Date(
-                membership.expiryDate
-            ) > new Date()
+            membership.expiryDate
         ) {
 
-            startDate =
+            const currentExpiry =
                 new Date(
                     membership.expiryDate
                 );
-        }
 
+            if (
+                !Number.isNaN(
+                    currentExpiry.getTime()
+                ) &&
+                currentExpiry > new Date()
+            ) {
+
+                startDate = currentExpiry;
+            }
+        }
 
         const expiryDate =
             new Date(startDate);
 
-
         expiryDate.setDate(
             expiryDate.getDate() +
             Number(
-                selectedPlan.durationDays
+                selectedPlan.durationDays || 0
             )
         );
-
 
         return expiryDate;
     };
 
 
-    // ==========================================
+    // =====================================================
     // FORMAT DATE
-    // ==========================================
+    // =====================================================
 
     const formatDate = (date) => {
 
@@ -263,22 +429,30 @@ function RenewMembership() {
             return "—";
         }
 
+        const parsedDate = new Date(date);
 
-        return new Date(date)
-            .toLocaleDateString(
-                "en-IN",
-                {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric"
-                }
-            );
+        if (
+            Number.isNaN(
+                parsedDate.getTime()
+            )
+        ) {
+            return "—";
+        }
+
+        return parsedDate.toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
     };
 
 
-    // ==========================================
+    // =====================================================
     // SELECT PLAN
-    // ==========================================
+    // =====================================================
 
     const handlePlanSelect = (plan) => {
 
@@ -289,110 +463,176 @@ function RenewMembership() {
     };
 
 
-    // ==========================================
-    // PAYMENT
-    // ==========================================
+    // =====================================================
+    // VERIFY PAYMENT
+    // =====================================================
 
-    const handlePayment = async () => {
+    const verifyPayment = async (
+        paymentResponse,
+        token
+    ) => {
 
         try {
 
-            setProcessing(true);
+            // =================================================
+            // GET VALUES FROM RAZORPAY
+            // =================================================
 
-            setMessage("");
+            const razorpayOrderId =
+                paymentResponse?.razorpay_order_id;
+
+            const razorpayPaymentId =
+                paymentResponse?.razorpay_payment_id;
+
+            const razorpaySignature =
+                paymentResponse?.razorpay_signature;
+
+
+            // =================================================
+            // DEBUG
+            // =================================================
+
+            console.log(
+                "=========================================="
+            );
+
+            console.log(
+                "RAZORPAY PAYMENT RESPONSE"
+            );
+
+            console.log(
+                "razorpay_order_id:",
+                razorpayOrderId
+            );
+
+            console.log(
+                "razorpay_payment_id:",
+                razorpayPaymentId
+            );
+
+            console.log(
+                "razorpay_signature:",
+                razorpaySignature
+                    ? "RECEIVED"
+                    : "MISSING"
+            );
+
+            console.log(
+                "=========================================="
+            );
+
+
+            // =================================================
+            // VALIDATION
+            // =================================================
+
+            if (
+                !razorpayOrderId ||
+                !razorpayPaymentId ||
+                !razorpaySignature
+            ) {
+
+                throw new Error(
+                    "Razorpay returned an incomplete payment response. Please try again."
+                );
+            }
+
+
+            setMessage(
+                "Payment completed. Verifying payment..."
+            );
+
             setError("");
 
 
-            const token =
-                localStorage.getItem("token");
+            // =================================================
+            // SEND TO BACKEND
+            // =================================================
 
-
-            if (!token) {
-
-                setError(
-                    "Please login to renew your membership."
-                );
-
-                return;
-            }
-
-
-            if (!membership) {
-
-                setError(
-                    "No membership found. Please create a membership first."
-                );
-
-                return;
-            }
-
-
-            if (!selectedPlan) {
-
-                setError(
-                    "Please select a membership plan."
-                );
-
-                return;
-            }
-
-
-            // ==========================================
-            // SEND ONLY PLAN ID
-            // ==========================================
-
-            const response =
+            const verifyResponse =
                 await fetch(
-                    `${API_BASE_URL}/api/memberships/renew`,
+                    `${API_BASE_URL}/api/payments/verify`,
                     {
-                        method: "PUT",
+                        method: "POST",
 
                         headers: {
-                            "Content-Type":
-                                "application/json",
-
                             Authorization:
-                                `Bearer ${token}`
+                                `Bearer ${token}`,
+
+                            "Content-Type":
+                                "application/json"
                         },
 
                         body: JSON.stringify({
-                            planId:
-                                selectedPlan._id
+
+                            razorpay_order_id:
+                                razorpayOrderId,
+
+                            razorpay_payment_id:
+                                razorpayPaymentId,
+
+                            razorpay_signature:
+                                razorpaySignature
+
                         })
                     }
                 );
 
 
-            const data =
-                await response.json();
+            const verifyData =
+                await verifyResponse.json();
 
 
-            if (!response.ok) {
+            console.log(
+                "Payment verification response:",
+                verifyData
+            );
+
+
+            if (!verifyResponse.ok) {
 
                 throw new Error(
-                    data.message ||
-                    "Membership renewal failed."
+                    verifyData.message ||
+                    "Payment verification failed."
                 );
             }
 
 
-            console.log(
-                "Membership renewal response:",
-                data
-            );
+            if (!verifyData.success) {
 
+                throw new Error(
+                    verifyData.message ||
+                    "Payment verification failed."
+                );
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            setProcessing(false);
+            setError("");
 
             setMessage(
-                data.message ||
-                "Membership renewed successfully!"
+                verifyData.message ||
+                "Payment successful! Your membership has been updated."
             );
 
 
-            setMembership(
-                data.membership ||
-                null
-            );
+            if (
+                verifyData.membership
+            ) {
 
+                setMembership(
+                    verifyData.membership
+                );
+            }
+
+
+            // =================================================
+            // REDIRECT
+            // =================================================
 
             setTimeout(() => {
 
@@ -400,32 +640,557 @@ function RenewMembership() {
                     "/membership"
                 );
 
-            }, 1200);
+            }, 2200);
 
 
         } catch (err) {
 
             console.error(
-                "Membership renewal error:",
+                "Payment verification error:",
                 err
             );
 
+            setProcessing(false);
+            setMessage("");
 
             setError(
                 err.message ||
-                "Unable to renew membership."
+                "Payment verification failed."
             );
-
-        } finally {
-
-            setProcessing(false);
         }
     };
 
 
-    // ==========================================
-    // LOADING
-    // ==========================================
+    // =====================================================
+    // HANDLE PAYMENT
+    // =====================================================
+
+    const handlePayment = async () => {
+
+        try {
+
+            setProcessing(true);
+            setMessage("");
+            setError("");
+
+
+            // =================================================
+            // TOKEN
+            // =================================================
+
+            const token =
+                getToken();
+
+
+            if (!token) {
+
+                throw new Error(
+                    "Please login to continue."
+                );
+            }
+
+
+            // =================================================
+            // PLAN
+            // =================================================
+
+            if (
+                !selectedPlan?._id
+            ) {
+
+                throw new Error(
+                    "Please select a membership plan."
+                );
+            }
+
+
+            // =================================================
+            // AMOUNT
+            // =================================================
+
+            const amount =
+                Number(
+                    selectedPlan.price
+                );
+
+
+            if (
+                !Number.isFinite(amount) ||
+                amount <= 0
+            ) {
+
+                throw new Error(
+                    "The selected membership plan has an invalid price."
+                );
+            }
+
+
+            // =================================================
+            // RAZORPAY SCRIPT
+            // =================================================
+
+            console.log(
+                "Loading Razorpay Checkout..."
+            );
+
+            const razorpayLoaded =
+                await loadRazorpayScript();
+
+
+            if (!razorpayLoaded) {
+
+                throw new Error(
+                    "Unable to load Razorpay Checkout."
+                );
+            }
+
+
+            if (
+                typeof window.Razorpay !==
+                "function"
+            ) {
+
+                throw new Error(
+                    "Razorpay Checkout is not available."
+                );
+            }
+
+
+            // =================================================
+            // CREATE ORDER
+            // =================================================
+
+            console.log(
+                "Creating Razorpay order..."
+            );
+
+
+            /*
+             * IMPORTANT:
+             * This is JavaScript.
+             * JSON.stringify() belongs here.
+             */
+
+            const orderResponse =
+                await fetch(
+                    `${API_BASE_URL}/api/payments/create-order`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`,
+
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            amount: amount,
+
+                            description:
+                                membership
+                                    ? `${selectedPlan.name} Membership Renewal`
+                                    : `${selectedPlan.name} Membership`,
+
+                            duration:
+                                `${selectedPlan.durationDays} days`,
+
+                            membership:
+                                membership?._id ||
+                                null,
+
+                            planId:
+                                selectedPlan._id
+
+                        })
+                    }
+                );
+
+
+            const orderData =
+                await orderResponse.json();
+
+
+            console.log(
+                "Razorpay order response:",
+                orderData
+            );
+
+
+            if (!orderResponse.ok) {
+
+                throw new Error(
+                    orderData.message ||
+                    "Unable to create Razorpay order."
+                );
+            }
+
+
+            if (
+                !orderData.success ||
+                !orderData.orderId ||
+                !orderData.keyId
+            ) {
+
+                throw new Error(
+                    "Invalid Razorpay order response."
+                );
+            }
+
+
+            // =================================================
+            // USER DETAILS
+            // =================================================
+
+            const currentUser =
+                getCurrentUser();
+
+
+            // =================================================
+            // RAZORPAY OPTIONS
+            // =================================================
+
+            const options = {
+
+                key:
+                    orderData.keyId,
+
+                amount:
+                    orderData.amount,
+
+                currency:
+                    orderData.currency ||
+                    "INR",
+
+                name:
+                    "LibraSpace Library",
+
+                description:
+                    membership
+                        ? `${selectedPlan.name} Membership Renewal`
+                        : `${selectedPlan.name} Membership`,
+
+                order_id:
+                    orderData.orderId,
+
+
+                // =================================================
+                // PREFILL
+                // =================================================
+
+                prefill: {
+
+                    name:
+                        currentUser?.name ||
+                        "",
+
+                    email:
+                        currentUser?.email ||
+                        "",
+
+                    contact:
+                        currentUser?.phone ||
+                        ""
+                },
+
+
+                // =================================================
+                // NOTES
+                // =================================================
+
+                notes: {
+
+                    userId:
+                        String(
+                            currentUser?._id ||
+                            currentUser?.id ||
+                            ""
+                        ),
+
+                    membershipId:
+                        String(
+                            membership?._id ||
+                            ""
+                        ),
+
+                    planId:
+                        String(
+                            selectedPlan._id
+                        )
+                },
+
+
+                // =================================================
+                // THEME
+                // =================================================
+
+                theme: {
+
+                    color:
+                        "#4f8fe8"
+                },
+
+
+                // =================================================
+                // SUCCESS HANDLER
+                // =================================================
+
+                handler:
+                    async (paymentResponse) => {
+
+                        console.log(
+                            "========== RAZORPAY HANDLER =========="
+                        );
+
+
+                        console.log(
+                            "Complete response:",
+                            paymentResponse
+                        );
+
+
+                        console.log(
+                            "Order ID:",
+                            paymentResponse
+                                ?.razorpay_order_id
+                        );
+
+
+                        console.log(
+                            "Payment ID:",
+                            paymentResponse
+                                ?.razorpay_payment_id
+                        );
+
+
+                        console.log(
+                            "Signature:",
+                            paymentResponse
+                                ?.razorpay_signature
+                                ? "RECEIVED"
+                                : "MISSING"
+                        );
+
+
+                        console.log(
+                            "======================================"
+                        );
+
+
+                        await verifyPayment(
+                            paymentResponse,
+                            token
+                        );
+                    },
+
+
+                // =================================================
+                // MODAL
+                // =================================================
+
+                modal: {
+
+                    ondismiss:
+                        () => {
+
+                            console.log(
+                                "Razorpay Checkout closed."
+                            );
+
+                            setProcessing(false);
+
+                            setError(
+                                "Payment window was closed."
+                            );
+                        }
+                }
+            };
+
+
+            // =================================================
+            // DEBUG
+            // =================================================
+
+            console.log(
+                "Razorpay loaded:",
+                !!window.Razorpay
+            );
+
+            console.log(
+                "Razorpay Key ID:",
+                orderData.keyId
+            );
+
+            console.log(
+                "Razorpay Order ID:",
+                orderData.orderId
+            );
+
+            console.log(
+                "Selected Plan:",
+                selectedPlan
+            );
+
+            console.log(
+                "Selected Plan ID:",
+                selectedPlan._id
+            );
+
+            console.log(
+                "Existing Membership:",
+                membership?._id ||
+                "NEW MEMBERSHIP"
+            );
+
+            console.log(
+                "Payment Amount:",
+                amount
+            );
+
+
+            // =================================================
+            // CREATE RAZORPAY INSTANCE
+            // =================================================
+
+            const razorpay =
+                new window.Razorpay(
+                    options
+                );
+
+
+            // =================================================
+            // PAYMENT FAILED EVENT
+            // =================================================
+
+            razorpay.on(
+                "payment.failed",
+                async (response) => {
+
+                    console.error(
+                        "=========================================="
+                    );
+
+                    console.error(
+                        "RAZORPAY PAYMENT FAILED"
+                    );
+
+                    console.error(
+                        response
+                    );
+
+                    console.error(
+                        "=========================================="
+                    );
+
+
+                    try {
+
+                        await fetch(
+                            `${API_BASE_URL}/api/payments/failed`,
+                            {
+                                method: "POST",
+
+                                headers: {
+
+                                    Authorization:
+                                        `Bearer ${token}`,
+
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+
+                                    razorpayOrderId:
+                                        orderData.orderId,
+
+                                    razorpayPaymentId:
+                                        response
+                                            ?.error
+                                            ?.metadata
+                                            ?.payment_id ||
+                                        "",
+
+                                    error:
+                                        response
+                                            ?.error
+                                            ?.description ||
+                                        "Payment failed"
+
+                                })
+                            }
+                        );
+
+                    } catch (failedError) {
+
+                        console.error(
+                            "Unable to record failed payment:",
+                            failedError
+                        );
+                    }
+
+
+                    setProcessing(false);
+
+                    setMessage("");
+
+                    setError(
+                        response
+                            ?.error
+                            ?.description ||
+                        "Payment failed. Please try again."
+                    );
+                }
+            );
+
+
+            // =================================================
+            // OPEN RAZORPAY
+            // =================================================
+
+            console.log(
+                "Opening Razorpay Checkout..."
+            );
+
+            razorpay.open();
+
+        } catch (err) {
+
+            console.error(
+                "Razorpay payment error:",
+                err
+            );
+
+            setProcessing(false);
+
+            setMessage("");
+
+            setError(
+                err.message ||
+                "Unable to start Razorpay payment."
+            );
+        }
+    };
+
+
+    // =====================================================
+    // LOGOUT
+    // =====================================================
+
+    const handleLogout = () => {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        navigate("/");
+    };
+
+
+    // =====================================================
+    // LOADING SCREEN
+    // =====================================================
 
     if (loading) {
 
@@ -442,6 +1207,7 @@ function RenewMembership() {
                         </div>
 
                         <div>
+
                             <strong>
                                 LibraSpace
                             </strong>
@@ -449,6 +1215,7 @@ function RenewMembership() {
                             <span>
                                 Smart Library
                             </span>
+
                         </div>
 
                     </div>
@@ -525,12 +1292,13 @@ function RenewMembership() {
                         </div>
 
 
-                        <Link
-                            to="/"
+                        <button
+                            type="button"
                             className="renew-logout"
+                            onClick={handleLogout}
                         >
                             ↪ Logout
-                        </Link>
+                        </button>
 
                     </div>
 
@@ -595,15 +1363,17 @@ function RenewMembership() {
     }
 
 
-    // ==========================================
+    // =====================================================
     // MAIN PAGE
-    // ==========================================
+    // =====================================================
 
     return (
 
         <div className="renew-page">
 
-            {/* ================= SIDEBAR ================= */}
+            {/* =================================================
+                SIDEBAR
+            ================================================== */}
 
             <aside className="renew-sidebar">
 
@@ -699,23 +1469,28 @@ function RenewMembership() {
                     </div>
 
 
-                    <Link
-                        to="/"
+                    <button
+                        type="button"
                         className="renew-logout"
+                        onClick={handleLogout}
                     >
                         ↪ Logout
-                    </Link>
+                    </button>
 
                 </div>
 
             </aside>
 
 
-            {/* ================= MAIN CONTENT ================= */}
+            {/* =================================================
+                MAIN CONTENT
+            ================================================== */}
 
             <div className="renew-content">
 
-                {/* TOPBAR */}
+                {/* =================================================
+                    TOPBAR
+                ================================================== */}
 
                 <header className="renew-topbar">
 
@@ -758,11 +1533,15 @@ function RenewMembership() {
                 </header>
 
 
-                {/* MAIN */}
+                {/* =================================================
+                    MAIN
+                ================================================== */}
 
                 <main className="renew-main">
 
-                    {/* BREADCRUMB */}
+                    {/* =================================================
+                        BREADCRUMB
+                    ================================================== */}
 
                     <div className="renew-breadcrumb">
 
@@ -770,13 +1549,17 @@ function RenewMembership() {
                             Dashboard
                         </Link>
 
-                        <span>/</span>
+                        <span>
+                            /
+                        </span>
 
                         <Link to="/membership">
                             Membership
                         </Link>
 
-                        <span>/</span>
+                        <span>
+                            /
+                        </span>
 
                         <strong>
                             Renew
@@ -785,7 +1568,9 @@ function RenewMembership() {
                     </div>
 
 
-                    {/* PAGE HEADER */}
+                    {/* =================================================
+                        HEADER
+                    ================================================== */}
 
                     <section className="renew-page-header">
 
@@ -810,11 +1595,56 @@ function RenewMembership() {
                     </section>
 
 
-                    {/* ================= RENEWAL AREA ================= */}
+                    {/* =================================================
+                        MEMBERSHIP NOTICE
+                    ================================================== */}
+
+                    <section className="renew-notice">
+
+                        <div className="renew-notice-icon">
+
+                            {membership ? "✓" : "ℹ️"}
+
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+
+                                {
+                                    membership
+                                        ? "Current Membership Found"
+                                        : "New Membership Purchase"
+                                }
+
+                            </strong>
+
+
+                            <p>
+
+                                {
+                                    membership
+                                        ? "Your payment will extend your existing membership."
+                                        : "No membership exists for this account yet. After successful payment, LibraSpace will create your membership automatically."
+                                }
+
+                            </p>
+
+                        </div>
+
+                    </section>
+
+
+                    {/* =================================================
+                        PLAN + PAYMENT
+                    ================================================== */}
 
                     <section className="renew-layout">
 
-                        {/* PLAN SELECTION */}
+                        {/* =================================================
+                            PLANS
+                        ================================================== */}
 
                         <div className="renew-plans-card">
 
@@ -858,16 +1688,14 @@ function RenewMembership() {
                                         key={plan._id}
                                         type="button"
                                         className={
-                                            selectedPlan?._id ===
-                                            plan._id
+                                            selectedPlan?._id === plan._id
                                                 ? "renew-plan selected"
                                                 : "renew-plan"
                                         }
                                         onClick={() =>
-                                            handlePlanSelect(
-                                                plan
-                                            )
+                                            handlePlanSelect(plan)
                                         }
+                                        disabled={processing}
                                     >
 
                                         <div className="renew-radio">
@@ -898,10 +1726,12 @@ function RenewMembership() {
                                         <div className="renew-plan-price">
 
                                             <strong>
+
                                                 ₹
                                                 {formatPrice(
                                                     plan.price
                                                 )}
+
                                             </strong>
 
                                             <span>
@@ -913,35 +1743,43 @@ function RenewMembership() {
                                     </button>
 
                                 ))
-
                             )}
 
 
-                            {/* BENEFITS */}
+                            {/* =================================================
+                                BENEFITS
+                            ================================================== */}
 
                             {selectedPlan && (
+
                                 <div className="renew-benefits">
 
                                     <span>
                                         INCLUDED WITH YOUR MEMBERSHIP
                                     </span>
 
+
                                     <div>
 
-                                        {selectedPlan.features?.map(
-                                            (
-                                                feature,
-                                                index
-                                            ) => (
+                                        {
+                                            Array.isArray(
+                                                selectedPlan.features
+                                            ) &&
+                                            selectedPlan.features.map(
+                                                (
+                                                    feature,
+                                                    index
+                                                ) => (
 
-                                                <p
-                                                    key={index}
-                                                >
-                                                    ✓ {feature}
-                                                </p>
+                                                    <p
+                                                        key={index}
+                                                    >
+                                                        ✓ {feature}
+                                                    </p>
 
+                                                )
                                             )
-                                        )}
+                                        }
 
                                     </div>
 
@@ -951,7 +1789,9 @@ function RenewMembership() {
                         </div>
 
 
-                        {/* PAYMENT SUMMARY */}
+                        {/* =================================================
+                            PAYMENT SUMMARY
+                        ================================================== */}
 
                         <aside className="renew-summary-card">
 
@@ -978,6 +1818,7 @@ function RenewMembership() {
                                             ♛
                                         </div>
 
+
                                         <div>
 
                                             <strong>
@@ -1003,14 +1844,20 @@ function RenewMembership() {
                                                 Current Membership
                                             </span>
 
+
                                             <strong>
 
-                                                {membership
-                                                    ? membership.status
-                                                        .charAt(0)
-                                                        .toUpperCase() +
-                                                      membership.status.slice(1)
-                                                    : "Not Found"}
+                                                {
+                                                    membership
+                                                        ? (
+                                                            membership.status
+                                                                ?.charAt(0)
+                                                                ?.toUpperCase() +
+                                                            membership.status
+                                                                ?.slice(1)
+                                                        )
+                                                        : "New Membership"
+                                                }
 
                                             </strong>
 
@@ -1024,9 +1871,7 @@ function RenewMembership() {
                                             </span>
 
                                             <strong>
-                                                {
-                                                    selectedPlan.planType
-                                                }
+                                                {selectedPlan.planType}
                                             </strong>
 
                                         </div>
@@ -1039,10 +1884,11 @@ function RenewMembership() {
                                             </span>
 
                                             <strong>
-                                                {
-                                                    selectedPlan.durationDays
-                                                }{" "}
+
+                                                {selectedPlan.durationDays}
+                                                {" "}
                                                 Days
+
                                             </strong>
 
                                         </div>
@@ -1051,13 +1897,28 @@ function RenewMembership() {
                                         <div>
 
                                             <span>
-                                                New Expiry Date
+
+                                                {
+                                                    membership
+                                                        ? "New Expiry Date"
+                                                        : "Membership Start"
+                                                }
+
                                             </span>
 
+
                                             <strong>
-                                                {formatDate(
-                                                    calculateExpiryDate()
-                                                )}
+
+                                                {
+                                                    membership
+                                                        ? formatDate(
+                                                            calculateExpiryDate()
+                                                        )
+                                                        : formatDate(
+                                                            new Date()
+                                                        )
+                                                }
+
                                             </strong>
 
                                         </div>
@@ -1075,30 +1936,38 @@ function RenewMembership() {
                                         </span>
 
                                         <strong>
+
                                             ₹
                                             {formatPrice(
                                                 selectedPlan.price
                                             )}
+
                                         </strong>
 
                                     </div>
 
 
+                                    {/* =================================================
+                                        PAYMENT BUTTON
+                                    ================================================== */}
+
                                     <button
                                         type="button"
                                         className="renew-payment-button"
-                                        onClick={
-                                            handlePayment
-                                        }
+                                        onClick={handlePayment}
                                         disabled={
                                             processing ||
-                                            !membership
+                                            !selectedPlan
                                         }
                                     >
 
-                                        {processing
-                                            ? "Processing..."
-                                            : "Proceed to Payment"}
+                                        {
+                                            processing
+                                                ? "Processing..."
+                                                : membership
+                                                    ? "Proceed to Payment"
+                                                    : "Pay & Get Membership"
+                                        }
 
                                         <span>
                                             →
@@ -1150,28 +2019,45 @@ function RenewMembership() {
                     </section>
 
 
-                    {/* ================= MESSAGES ================= */}
+                    {/* =================================================
+                        SUCCESS / ERROR
+                    ================================================== */}
 
                     {(message || error) && (
 
                         <section className="renew-notice">
 
                             <div className="renew-notice-icon">
-                                {message
-                                    ? "✓"
-                                    : "⚠️"}
+
+                                {
+                                    message
+                                        ? "✓"
+                                        : "⚠️"
+                                }
+
                             </div>
+
 
                             <div>
 
                                 <strong>
-                                    {message
-                                        ? "Renewal Successful"
-                                        : "Renewal Error"}
+
+                                    {
+                                        message
+                                            ? "Payment Status"
+                                            : "Payment Error"
+                                    }
+
                                 </strong>
 
+
                                 <p>
-                                    {message || error}
+
+                                    {
+                                        message ||
+                                        error
+                                    }
+
                                 </p>
 
                             </div>
@@ -1181,7 +2067,9 @@ function RenewMembership() {
                     )}
 
 
-                    {/* ================= NOTICE ================= */}
+                    {/* =================================================
+                        INFORMATION
+                    ================================================== */}
 
                     <section className="renew-notice">
 
@@ -1189,17 +2077,24 @@ function RenewMembership() {
                             💡
                         </div>
 
+
                         <div>
 
                             <strong>
-                                How renewal works
+                                How payment works
                             </strong>
 
+
                             <p>
-                                Select your preferred membership
-                                plan and continue with the payment.
-                                After successful payment, your
-                                membership dates will be updated.
+                                Select your membership plan and
+                                continue with Razorpay. For a new
+                                member, successful payment creates
+                                the membership. For an existing
+                                member, successful payment extends
+                                the membership. The LibraSpace
+                                backend verifies the Razorpay
+                                payment before updating membership
+                                details.
                             </p>
 
                         </div>
@@ -1209,7 +2104,9 @@ function RenewMembership() {
                 </main>
 
 
-                {/* FOOTER */}
+                {/* =================================================
+                    FOOTER
+                ================================================== */}
 
                 <footer className="renew-footer">
 
@@ -1225,6 +2122,7 @@ function RenewMembership() {
                         </span>
 
                     </div>
+
 
                     <span>
                         © 2026 LibraSpace
