@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./AdminSettings.css";
+
+const API_BASE = "http://localhost:5000/api/admin/settings";
 
 const defaultSettings = {
     libraryName: "LibraSpace Library",
@@ -11,9 +13,9 @@ const defaultSettings = {
     openingTime: "08:00",
     closingTime: "20:00",
 
-    maxReservationHours: "4",
-    advanceBookingDays: "7",
-    cancellationHours: "2",
+    maxReservationHours: 4,
+    advanceBookingDays: 7,
+    cancellationHours: 2,
 
     maintenanceMode: false,
 
@@ -30,28 +32,130 @@ const defaultSettings = {
 };
 
 function AdminSettings() {
-
     const location = useLocation();
     const navigate = useNavigate();
 
     const [settings, setSettings] = useState(defaultSettings);
-    const [activeSection, setActiveSection] = useState("general");
+    const [originalSettings, setOriginalSettings] =
+        useState(defaultSettings);
+
+    const [activeSection, setActiveSection] =
+        useState("general");
 
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
     const [savedMessage, setSavedMessage] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
+
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [passwordSaving, setPasswordSaving] =
+        useState(false);
+
+    const [notificationCount, setNotificationCount] =
+        useState(0);
+
+    const getToken = () => {
+        return (
+            localStorage.getItem("adminToken") ||
+            localStorage.getItem("token")
+        );
+    };
+
+    const getHeaders = () => {
+        const token = getToken();
+
+        return {
+            "Content-Type": "application/json",
+            ...(token
+                ? {
+                      Authorization: `Bearer ${token}`
+                  }
+                : {})
+        };
+    };
 
     const isActive = (path) => {
         return location.pathname === path ? "active" : "";
     };
 
+    /* =====================================================
+       LOAD SETTINGS
+    ====================================================== */
+
+    useEffect(() => {
+        fetchSettings();
+    }, []);
+
+    const fetchSettings = async () => {
+        try {
+            setLoading(true);
+            setErrorMessage("");
+
+            const response = await fetch(API_BASE, {
+                method: "GET",
+                headers: getHeaders()
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                        "Failed to load settings."
+                );
+            }
+
+            const loadedSettings = {
+                ...defaultSettings,
+                ...(data.settings || data)
+            };
+
+            setSettings(loadedSettings);
+            setOriginalSettings(loadedSettings);
+
+            if (
+                typeof data.notificationCount ===
+                "number"
+            ) {
+                setNotificationCount(
+                    data.notificationCount
+                );
+            }
+        } catch (error) {
+            console.error(
+                "Settings loading error:",
+                error
+            );
+
+            setErrorMessage(
+                error.message ||
+                    "Unable to load settings."
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /* =====================================================
+       LOGOUT
+    ====================================================== */
+
     const handleLogout = () => {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("token");
+        localStorage.removeItem("adminUser");
+        localStorage.removeItem("user");
+
         navigate("/admin/login");
     };
 
-    const handleChange = (e) => {
+    /* =====================================================
+       INPUT CHANGE
+    ====================================================== */
 
+    const handleChange = (e) => {
         const {
             name,
             value,
@@ -61,30 +165,80 @@ function AdminSettings() {
 
         setSettings((prev) => ({
             ...prev,
-            [name]: type === "checkbox"
-                ? checked
-                : value
+            [name]:
+                type === "checkbox"
+                    ? checked
+                    : value
         }));
 
         setSavedMessage("");
+        setErrorMessage("");
     };
 
-    const handleSave = (e) => {
+    /* =====================================================
+       SAVE SETTINGS
+    ====================================================== */
 
+    const handleSave = async (e) => {
         e.preventDefault();
 
-        setSavedMessage(
-            "Settings saved successfully."
-        );
-
-        setTimeout(() => {
+        try {
+            setSaving(true);
             setSavedMessage("");
-        }, 3000);
+            setErrorMessage("");
+
+            const response = await fetch(API_BASE, {
+                method: "PUT",
+                headers: getHeaders(),
+                body: JSON.stringify(settings)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                        "Failed to save settings."
+                );
+            }
+
+            const updatedSettings = {
+                ...defaultSettings,
+                ...(data.settings || settings)
+            };
+
+            setSettings(updatedSettings);
+            setOriginalSettings(updatedSettings);
+
+            setSavedMessage(
+                data.message ||
+                    "Settings saved successfully."
+            );
+
+            setTimeout(() => {
+                setSavedMessage("");
+            }, 3000);
+        } catch (error) {
+            console.error(
+                "Settings save error:",
+                error
+            );
+
+            setErrorMessage(
+                error.message ||
+                    "Unable to save settings."
+            );
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handleReset = () => {
+    /* =====================================================
+       RESET
+    ====================================================== */
 
-        setSettings(defaultSettings);
+    const handleReset = () => {
+        setSettings(originalSettings);
 
         setNewPassword("");
         setConfirmPassword("");
@@ -93,15 +247,22 @@ function AdminSettings() {
             "Settings have been reset."
         );
 
+        setErrorMessage("");
+
         setTimeout(() => {
             setSavedMessage("");
         }, 3000);
     };
 
-    const handlePasswordChange = () => {
+    /* =====================================================
+       CHANGE PASSWORD
+    ====================================================== */
 
+    const handlePasswordChange = async () => {
         if (!newPassword || !confirmPassword) {
-            alert("Please enter both password fields.");
+            alert(
+                "Please enter both password fields."
+            );
             return;
         }
 
@@ -117,14 +278,68 @@ function AdminSettings() {
             return;
         }
 
-        alert("Password changed successfully.");
+        try {
+            setPasswordSaving(true);
 
-        setNewPassword("");
-        setConfirmPassword("");
+            const response = await fetch(
+                `${API_BASE}/password`,
+                {
+                    method: "PUT",
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        newPassword
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                        "Failed to change password."
+                );
+            }
+
+            alert(
+                data.message ||
+                    "Password changed successfully."
+            );
+
+            setNewPassword("");
+            setConfirmPassword("");
+        } catch (error) {
+            console.error(
+                "Password change error:",
+                error
+            );
+
+            alert(
+                error.message ||
+                    "Unable to change password."
+            );
+        } finally {
+            setPasswordSaving(false);
+        }
     };
 
-    return (
+    /* =====================================================
+       LOADING
+    ====================================================== */
 
+    if (loading) {
+        return (
+            <div className="admin-settings-loading">
+                <div className="loading-spinner"></div>
+
+                <p>
+                    Loading LibraSpace settings...
+                </p>
+            </div>
+        );
+    }
+
+    return (
         <div className="admin-settings-page">
 
             {/* =====================================================
@@ -136,9 +351,7 @@ function AdminSettings() {
                 {/* LOGO */}
 
                 <div className="admin-sidebar-logo">
-
                     <Link to="/">
-
                         <span className="admin-logo-icon">
                             📚
                         </span>
@@ -152,11 +365,8 @@ function AdminSettings() {
                                 Admin Portal
                             </small>
                         </div>
-
                     </Link>
-
                 </div>
-
 
                 {/* NAVIGATION */}
 
@@ -165,7 +375,6 @@ function AdminSettings() {
                     <p className="admin-nav-title">
                         MAIN MENU
                     </p>
-
 
                     <Link
                         to="/admin/dashboard"
@@ -177,18 +386,6 @@ function AdminSettings() {
                         Dashboard
                     </Link>
 
-
-                    <Link
-                        to="/admin/books"
-                        className={`admin-nav-link ${isActive(
-                            "/admin/books"
-                        )}`}
-                    >
-                        <span>📚</span>
-                        Manage Books
-                    </Link>
-
-
                     <Link
                         to="/admin/seats"
                         className={`admin-nav-link ${isActive(
@@ -198,7 +395,6 @@ function AdminSettings() {
                         <span>💺</span>
                         Manage Seats
                     </Link>
-
 
                     <Link
                         to="/admin/reservations"
@@ -210,11 +406,9 @@ function AdminSettings() {
                         Reservations
                     </Link>
 
-
                     <p className="admin-nav-title second-title">
                         MANAGEMENT
                     </p>
-
 
                     <Link
                         to="/admin/members"
@@ -226,7 +420,6 @@ function AdminSettings() {
                         Members
                     </Link>
 
-
                     <Link
                         to="/admin/memberships"
                         className={`admin-nav-link ${isActive(
@@ -236,7 +429,6 @@ function AdminSettings() {
                         <span>🎫</span>
                         Memberships
                     </Link>
-
 
                     <Link
                         to="/admin/payments"
@@ -248,7 +440,6 @@ function AdminSettings() {
                         Payments
                     </Link>
 
-
                     <Link
                         to="/admin/reports"
                         className={`admin-nav-link ${isActive(
@@ -259,11 +450,9 @@ function AdminSettings() {
                         Reports
                     </Link>
 
-
                     <p className="admin-nav-title second-title">
                         SYSTEM
                     </p>
-
 
                     <Link
                         to="/admin/settings"
@@ -274,30 +463,20 @@ function AdminSettings() {
                         <span>⚙️</span>
                         Settings
                     </Link>
-
                 </nav>
-
 
                 {/* SIDEBAR BOTTOM */}
 
                 <div className="admin-sidebar-bottom">
-
-                    
-
-
                     <button
                         className="admin-logout-button"
                         onClick={handleLogout}
                     >
                         <span>🚪</span>
-
                         Logout
                     </button>
-
                 </div>
-
             </aside>
-
 
             {/* =====================================================
                 MAIN
@@ -305,14 +484,11 @@ function AdminSettings() {
 
             <main className="admin-main">
 
-                {/* =================================================
-                    TOPBAR
-                ================================================== */}
+                {/* TOPBAR */}
 
                 <header className="admin-topbar">
 
                     <div className="admin-topbar-left">
-
                         <span className="admin-page-label">
                             ADMINISTRATOR
                         </span>
@@ -320,9 +496,7 @@ function AdminSettings() {
                         <h1>
                             Settings
                         </h1>
-
                     </div>
-
 
                     <div className="admin-topbar-right">
 
@@ -331,47 +505,49 @@ function AdminSettings() {
                             title="Notifications"
                             onClick={() =>
                                 alert(
-                                    "You have 3 notifications."
+                                    notificationCount > 0
+                                        ? `You have ${notificationCount} notifications.`
+                                        : "You have no new notifications."
                                 )
                             }
                         >
                             🔔
 
-                            <span></span>
+                            {notificationCount > 0 && (
+                                <span>
+                                    {notificationCount}
+                                </span>
+                            )}
                         </button>
-
 
                         <div className="admin-profile">
 
                             <div className="admin-avatar">
-                                A
+                                {settings.adminName
+                                    ? settings.adminName
+                                          .charAt(0)
+                                          .toUpperCase()
+                                    : "A"}
                             </div>
 
                             <div className="admin-profile-info">
 
                                 <strong>
-                                    Administrator
+                                    {settings.adminName}
                                 </strong>
 
                                 <small>
-                                    admin@libraspace.com
+                                    {settings.adminEmail}
                                 </small>
 
                             </div>
-
                         </div>
-
                     </div>
-
                 </header>
 
-
-                {/* =================================================
-                    CONTENT
-                ================================================== */}
+                {/* CONTENT */}
 
                 <section className="settings-content">
-
 
                     {/* BREADCRUMB */}
 
@@ -381,16 +557,13 @@ function AdminSettings() {
                             Dashboard
                         </Link>
 
-                        <span>
-                            ›
-                        </span>
+                        <span>›</span>
 
                         <strong>
                             Settings
                         </strong>
 
                     </div>
-
 
                     {/* PAGE HEADER */}
 
@@ -413,38 +586,42 @@ function AdminSettings() {
 
                         </div>
 
-
                         <div className="header-actions">
 
                             <button
                                 className="reset-btn"
                                 onClick={handleReset}
+                                disabled={saving}
                             >
                                 <i className="fa-solid fa-rotate-left"></i>
-
                                 Reset
                             </button>
-
 
                             <button
                                 className="save-btn"
                                 onClick={handleSave}
+                                disabled={saving}
                             >
-                                <i className="fa-solid fa-check"></i>
+                                <i
+                                    className={
+                                        saving
+                                            ? "fa-solid fa-spinner fa-spin"
+                                            : "fa-solid fa-check"
+                                    }
+                                ></i>
 
-                                Save Changes
+                                {saving
+                                    ? "Saving..."
+                                    : "Save Changes"}
                             </button>
 
                         </div>
-
                     </div>
-
 
                     {/* SUCCESS MESSAGE */}
 
                     {savedMessage && (
-
-                        <div className="settings-message">
+                        <div className="settings-message success-message">
 
                             <i className="fa-solid fa-circle-check"></i>
 
@@ -453,9 +630,21 @@ function AdminSettings() {
                             </span>
 
                         </div>
-
                     )}
 
+                    {/* ERROR MESSAGE */}
+
+                    {errorMessage && (
+                        <div className="settings-message error-message">
+
+                            <i className="fa-solid fa-circle-exclamation"></i>
+
+                            <span>
+                                {errorMessage}
+                            </span>
+
+                        </div>
+                    )}
 
                     {/* =================================================
                         SETTINGS LAYOUT
@@ -463,11 +652,9 @@ function AdminSettings() {
 
                     <div className="settings-layout">
 
-
                         {/* SETTINGS MENU */}
 
                         <aside className="settings-menu">
-
 
                             {/* GENERAL */}
 
@@ -481,7 +668,6 @@ function AdminSettings() {
                                     setActiveSection("general")
                                 }
                             >
-
                                 <span className="menu-icon">
                                     <i className="fa-solid fa-sliders"></i>
                                 </span>
@@ -497,9 +683,7 @@ function AdminSettings() {
                                 </span>
 
                                 <i className="fa-solid fa-chevron-right"></i>
-
                             </button>
-
 
                             {/* LIBRARY */}
 
@@ -513,7 +697,6 @@ function AdminSettings() {
                                     setActiveSection("library")
                                 }
                             >
-
                                 <span className="menu-icon">
                                     <i className="fa-solid fa-building"></i>
                                 </span>
@@ -529,9 +712,7 @@ function AdminSettings() {
                                 </span>
 
                                 <i className="fa-solid fa-chevron-right"></i>
-
                             </button>
-
 
                             {/* RESERVATIONS */}
 
@@ -545,7 +726,6 @@ function AdminSettings() {
                                     setActiveSection("reservation")
                                 }
                             >
-
                                 <span className="menu-icon">
                                     <i className="fa-solid fa-calendar-days"></i>
                                 </span>
@@ -561,9 +741,7 @@ function AdminSettings() {
                                 </span>
 
                                 <i className="fa-solid fa-chevron-right"></i>
-
                             </button>
-
 
                             {/* NOTIFICATIONS */}
 
@@ -577,7 +755,6 @@ function AdminSettings() {
                                     setActiveSection("notifications")
                                 }
                             >
-
                                 <span className="menu-icon">
                                     <i className="fa-solid fa-bell"></i>
                                 </span>
@@ -593,9 +770,7 @@ function AdminSettings() {
                                 </span>
 
                                 <i className="fa-solid fa-chevron-right"></i>
-
                             </button>
-
 
                             {/* SECURITY */}
 
@@ -609,7 +784,6 @@ function AdminSettings() {
                                     setActiveSection("security")
                                 }
                             >
-
                                 <span className="menu-icon">
                                     <i className="fa-solid fa-shield-halved"></i>
                                 </span>
@@ -625,25 +799,19 @@ function AdminSettings() {
                                 </span>
 
                                 <i className="fa-solid fa-chevron-right"></i>
-
                             </button>
 
                         </aside>
 
-
-                        {/* =================================================
-                            SETTINGS PANELS
-                        ================================================== */}
+                        {/* SETTINGS PANELS */}
 
                         <div className="settings-panels">
-
 
                             {/* =================================================
                                 GENERAL
                             ================================================== */}
 
                             {activeSection === "general" && (
-
                                 <>
 
                                     {/* GENERAL SETTINGS */}
@@ -657,7 +825,6 @@ function AdminSettings() {
                                             </div>
 
                                             <div>
-
                                                 <h2>
                                                     General Settings
                                                 </h2>
@@ -667,14 +834,11 @@ function AdminSettings() {
                                                     information of your
                                                     library system.
                                                 </p>
-
                                             </div>
 
                                         </div>
 
-
                                         <div className="form-grid">
-
 
                                             {/* LIBRARY NAME */}
 
@@ -703,7 +867,6 @@ function AdminSettings() {
 
                                             </div>
 
-
                                             {/* EMAIL */}
 
                                             <div className="form-group">
@@ -731,7 +894,6 @@ function AdminSettings() {
 
                                             </div>
 
-
                                             {/* PHONE */}
 
                                             <div className="form-group">
@@ -758,7 +920,6 @@ function AdminSettings() {
                                                 </div>
 
                                             </div>
-
 
                                             {/* ADDRESS */}
 
@@ -791,7 +952,6 @@ function AdminSettings() {
 
                                     </div>
 
-
                                     {/* OPERATING HOURS */}
 
                                     <div className="settings-card">
@@ -820,9 +980,7 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <div className="form-grid">
-
 
                                             <div className="form-group">
 
@@ -848,7 +1006,6 @@ function AdminSettings() {
                                                 </div>
 
                                             </div>
-
 
                                             <div className="form-group">
 
@@ -877,13 +1034,11 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <div className="hours-note">
 
                                             <i className="fa-solid fa-circle-info"></i>
 
                                             <span>
-
                                                 Current library hours:
 
                                                 <strong>
@@ -892,7 +1047,6 @@ function AdminSettings() {
                                                     {" "}–{" "}
                                                     {settings.closingTime}
                                                 </strong>
-
                                             </span>
 
                                         </div>
@@ -900,28 +1054,22 @@ function AdminSettings() {
                                     </div>
 
                                 </>
-
                             )}
-
 
                             {/* =================================================
                                 LIBRARY
                             ================================================== */}
 
                             {activeSection === "library" && (
-
                                 <div className="settings-card">
 
                                     <div className="card-heading">
 
                                         <div className="heading-icon purple">
-
                                             <i className="fa-solid fa-building"></i>
-
                                         </div>
 
                                         <div>
-
                                             <h2>
                                                 Library Information
                                             </h2>
@@ -930,20 +1078,15 @@ function AdminSettings() {
                                                 Manage the information
                                                 displayed to library users.
                                             </p>
-
                                         </div>
 
                                     </div>
 
-
                                     <div className="library-info-preview">
 
                                         <div className="library-preview-icon">
-
                                             <i className="fa-solid fa-book-open"></i>
-
                                         </div>
-
 
                                         <div>
 
@@ -967,9 +1110,7 @@ function AdminSettings() {
 
                                     </div>
 
-
                                     <div className="form-grid">
-
 
                                         <div className="form-group">
 
@@ -991,7 +1132,6 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <div className="form-group">
 
                                             <label>
@@ -1012,7 +1152,6 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <div className="form-group">
 
                                             <label>
@@ -1032,7 +1171,6 @@ function AdminSettings() {
                                             />
 
                                         </div>
-
 
                                         <div className="form-group full-width">
 
@@ -1057,24 +1195,19 @@ function AdminSettings() {
                                     </div>
 
                                 </div>
-
                             )}
-
 
                             {/* =================================================
                                 RESERVATIONS
                             ================================================== */}
 
                             {activeSection === "reservation" && (
-
                                 <div className="settings-card">
 
                                     <div className="card-heading">
 
                                         <div className="heading-icon orange">
-
                                             <i className="fa-solid fa-calendar-check"></i>
-
                                         </div>
 
                                         <div>
@@ -1092,9 +1225,7 @@ function AdminSettings() {
 
                                     </div>
 
-
                                     <div className="form-grid">
-
 
                                         {/* MAX HOURS */}
 
@@ -1130,7 +1261,6 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         {/* ADVANCE DAYS */}
 
                                         <div className="form-group">
@@ -1164,7 +1294,6 @@ function AdminSettings() {
                                             </small>
 
                                         </div>
-
 
                                         {/* CANCELLATION */}
 
@@ -1202,7 +1331,6 @@ function AdminSettings() {
 
                                     </div>
 
-
                                     {/* MAINTENANCE */}
 
                                     <div className="setting-toggle-row">
@@ -1230,7 +1358,6 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <label className="switch">
 
                                             <input
@@ -1251,24 +1378,19 @@ function AdminSettings() {
                                     </div>
 
                                 </div>
-
                             )}
-
 
                             {/* =================================================
                                 NOTIFICATIONS
                             ================================================== */}
 
                             {activeSection === "notifications" && (
-
                                 <div className="settings-card">
 
                                     <div className="card-heading">
 
                                         <div className="heading-icon green">
-
                                             <i className="fa-solid fa-bell"></i>
-
                                         </div>
 
                                         <div>
@@ -1286,9 +1408,7 @@ function AdminSettings() {
 
                                     </div>
 
-
                                     <div className="notification-settings">
-
 
                                         {/* EMAIL */}
 
@@ -1297,9 +1417,7 @@ function AdminSettings() {
                                             <div className="notification-info">
 
                                                 <div className="notification-icon">
-
                                                     <i className="fa-solid fa-envelope"></i>
-
                                                 </div>
 
                                                 <div>
@@ -1317,7 +1435,6 @@ function AdminSettings() {
                                                 </div>
 
                                             </div>
-
 
                                             <label className="switch">
 
@@ -1338,7 +1455,6 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         {/* RESERVATIONS */}
 
                                         <div className="notification-row">
@@ -1346,9 +1462,7 @@ function AdminSettings() {
                                             <div className="notification-info">
 
                                                 <div className="notification-icon blue-bg">
-
                                                     <i className="fa-solid fa-calendar-check"></i>
-
                                                 </div>
 
                                                 <div>
@@ -1366,7 +1480,6 @@ function AdminSettings() {
                                                 </div>
 
                                             </div>
-
 
                                             <label className="switch">
 
@@ -1387,7 +1500,6 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         {/* MEMBERSHIP */}
 
                                         <div className="notification-row">
@@ -1395,9 +1507,7 @@ function AdminSettings() {
                                             <div className="notification-info">
 
                                                 <div className="notification-icon purple-bg">
-
                                                     <i className="fa-solid fa-id-card"></i>
-
                                                 </div>
 
                                                 <div>
@@ -1415,7 +1525,6 @@ function AdminSettings() {
                                                 </div>
 
                                             </div>
-
 
                                             <label className="switch">
 
@@ -1436,7 +1545,6 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         {/* PAYMENT */}
 
                                         <div className="notification-row">
@@ -1444,9 +1552,7 @@ function AdminSettings() {
                                             <div className="notification-info">
 
                                                 <div className="notification-icon green-bg">
-
                                                     <i className="fa-solid fa-credit-card"></i>
-
                                                 </div>
 
                                                 <div>
@@ -1464,7 +1570,6 @@ function AdminSettings() {
                                                 </div>
 
                                             </div>
-
 
                                             <label className="switch">
 
@@ -1488,16 +1593,13 @@ function AdminSettings() {
                                     </div>
 
                                 </div>
-
                             )}
-
 
                             {/* =================================================
                                 SECURITY
                             ================================================== */}
 
                             {activeSection === "security" && (
-
                                 <>
 
                                     {/* ADMIN PROFILE */}
@@ -1507,9 +1609,7 @@ function AdminSettings() {
                                         <div className="card-heading">
 
                                             <div className="heading-icon red">
-
                                                 <i className="fa-solid fa-user-shield"></i>
-
                                             </div>
 
                                             <div>
@@ -1527,11 +1627,14 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <div className="admin-profile-box">
 
                                             <div className="large-avatar">
-                                                A
+                                                {settings.adminName
+                                                    ? settings.adminName
+                                                          .charAt(0)
+                                                          .toUpperCase()
+                                                    : "A"}
                                             </div>
 
                                             <div>
@@ -1552,9 +1655,7 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <div className="form-grid">
-
 
                                             <div className="form-group">
 
@@ -1580,7 +1681,6 @@ function AdminSettings() {
                                                 </div>
 
                                             </div>
-
 
                                             <div className="form-group">
 
@@ -1611,7 +1711,6 @@ function AdminSettings() {
 
                                     </div>
 
-
                                     {/* CHANGE PASSWORD */}
 
                                     <div className="settings-card">
@@ -1619,9 +1718,7 @@ function AdminSettings() {
                                         <div className="card-heading">
 
                                             <div className="heading-icon red">
-
                                                 <i className="fa-solid fa-lock"></i>
-
                                             </div>
 
                                             <div>
@@ -1639,9 +1736,7 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <div className="form-grid">
-
 
                                             <div className="form-group">
 
@@ -1669,7 +1764,6 @@ function AdminSettings() {
                                                 </div>
 
                                             </div>
-
 
                                             <div className="form-group">
 
@@ -1700,20 +1794,29 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <button
                                             className="password-btn"
                                             onClick={
                                                 handlePasswordChange
                                             }
+                                            disabled={
+                                                passwordSaving
+                                            }
                                         >
-                                            <i className="fa-solid fa-key"></i>
+                                            <i
+                                                className={
+                                                    passwordSaving
+                                                        ? "fa-solid fa-spinner fa-spin"
+                                                        : "fa-solid fa-key"
+                                                }
+                                            ></i>
 
-                                            Update Password
+                                            {passwordSaving
+                                                ? "Updating..."
+                                                : "Update Password"}
                                         </button>
 
                                     </div>
-
 
                                     {/* PAYMENT SETTINGS */}
 
@@ -1722,9 +1825,7 @@ function AdminSettings() {
                                         <div className="card-heading">
 
                                             <div className="heading-icon payment-purple">
-
                                                 <i className="fa-solid fa-credit-card"></i>
-
                                             </div>
 
                                             <div>
@@ -1742,13 +1843,10 @@ function AdminSettings() {
 
                                         </div>
 
-
                                         <div className="payment-status-box">
 
                                             <div className="payment-logo">
-
                                                 <i className="fa-solid fa-bolt"></i>
-
                                             </div>
 
                                             <div>
@@ -1764,14 +1862,13 @@ function AdminSettings() {
                                             </div>
 
                                             <span className="test-badge">
-                                                Test Mode
+                                                {settings.razorpayMode ||
+                                                    "Test Mode"}
                                             </span>
 
                                         </div>
 
-
                                         <div className="payment-fields">
-
 
                                             <div className="payment-field">
 
@@ -1789,7 +1886,6 @@ function AdminSettings() {
 
                                             </div>
 
-
                                             <div className="payment-field">
 
                                                 <label>
@@ -1799,7 +1895,8 @@ function AdminSettings() {
                                                 <input
                                                     type="text"
                                                     value={
-                                                        settings.razorpayKey
+                                                        settings.razorpayKey ||
+                                                        "Not configured"
                                                     }
                                                     readOnly
                                                 />
@@ -1807,7 +1904,6 @@ function AdminSettings() {
                                             </div>
 
                                         </div>
-
 
                                         <div className="payment-note">
 
@@ -1835,13 +1931,10 @@ function AdminSettings() {
                                     </div>
 
                                 </>
-
                             )}
 
                         </div>
-
                     </div>
-
 
                     {/* =================================================
                         BOTTOM ACTIONS
@@ -1854,40 +1947,45 @@ function AdminSettings() {
                             <i className="fa-solid fa-circle-info"></i>
 
                             <span>
-                                Changes are currently stored in the
-                                frontend demo only.
+                                Settings are stored securely in the
+                                LibraSpace backend.
                             </span>
 
                         </div>
-
 
                         <div className="bottom-buttons">
 
                             <button
                                 className="reset-btn"
                                 onClick={handleReset}
+                                disabled={saving}
                             >
                                 Cancel
                             </button>
 
-
                             <button
                                 className="save-btn"
                                 onClick={handleSave}
+                                disabled={saving}
                             >
-                                <i className="fa-solid fa-floppy-disk"></i>
+                                <i
+                                    className={
+                                        saving
+                                            ? "fa-solid fa-spinner fa-spin"
+                                            : "fa-solid fa-floppy-disk"
+                                    }
+                                ></i>
 
-                                Save Settings
+                                {saving
+                                    ? "Saving..."
+                                    : "Save Settings"}
                             </button>
 
                         </div>
 
                     </div>
 
-
-                    {/* =================================================
-                        FOOTER
-                    ================================================== */}
+                    {/* FOOTER */}
 
                     <footer className="admin-settings-footer">
 

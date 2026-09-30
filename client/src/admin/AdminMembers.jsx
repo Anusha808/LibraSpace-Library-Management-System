@@ -1,157 +1,24 @@
-import React, { useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, {
+    useEffect,
+    useMemo,
+    useState
+} from "react";
+
+import {
+    Link,
+    useLocation,
+    useNavigate
+} from "react-router-dom";
+
 import "./AdminMembers.css";
 
 
 /* =========================================================
-   SAMPLE MEMBER DATA
+   API
 ========================================================= */
 
-const initialMembers = [
-    {
-        id: "LIB2026001",
-        name: "Ananya Sharma",
-        email: "ananya.sharma@gmail.com",
-        phone: "+91 98765 43210",
-        plan: "Premium Reader",
-        joinDate: "12 Sep 2026",
-        expiryDate: "10 Oct 2026",
-        status: "Active",
-        reservations: 12,
-    },
-
-    {
-        id: "LIB2026002",
-        name: "Rahul Kumar",
-        email: "rahul.kumar@gmail.com",
-        phone: "+91 98765 12345",
-        plan: "Premium Reader",
-        joinDate: "05 Aug 2026",
-        expiryDate: "05 Oct 2026",
-        status: "Active",
-        reservations: 9,
-    },
-
-    {
-        id: "LIB2026003",
-        name: "Priya Nair",
-        email: "priya.nair@gmail.com",
-        phone: "+91 99887 66554",
-        plan: "Basic Reader",
-        joinDate: "15 Jul 2026",
-        expiryDate: "15 Sep 2026",
-        status: "Expiring Soon",
-        reservations: 7,
-    },
-
-    {
-        id: "LIB2026004",
-        name: "Arjun Menon",
-        email: "arjun.menon@gmail.com",
-        phone: "+91 91234 56789",
-        plan: "Premium Reader",
-        joinDate: "20 Jun 2026",
-        expiryDate: "20 Sep 2026",
-        status: "Active",
-        reservations: 15,
-    },
-
-    {
-        id: "LIB2026005",
-        name: "Sneha Reddy",
-        email: "sneha.reddy@gmail.com",
-        phone: "+91 90123 45678",
-        plan: "Premium Reader",
-        joinDate: "10 Mar 2026",
-        expiryDate: "10 Sep 2026",
-        status: "Expired",
-        reservations: 18,
-    },
-
-    {
-        id: "LIB2026006",
-        name: "Vikram Singh",
-        email: "vikram.singh@gmail.com",
-        phone: "+91 93456 78901",
-        plan: "Basic Reader",
-        joinDate: "18 Aug 2026",
-        expiryDate: "18 Sep 2026",
-        status: "Expiring Soon",
-        reservations: 6,
-    },
-
-    {
-        id: "LIB2026007",
-        name: "Meera Iyer",
-        email: "meera.iyer@gmail.com",
-        phone: "+91 94567 89012",
-        plan: "Premium Reader",
-        joinDate: "12 May 2026",
-        expiryDate: "12 Oct 2026",
-        status: "Active",
-        reservations: 21,
-    },
-
-    {
-        id: "LIB2026008",
-        name: "Karan Patel",
-        email: "karan.patel@gmail.com",
-        phone: "+91 95678 90123",
-        plan: "Basic Reader",
-        joinDate: "03 Jan 2026",
-        expiryDate: "03 Jul 2026",
-        status: "Expired",
-        reservations: 11,
-    },
-
-    {
-        id: "LIB2026009",
-        name: "Divya Krishnan",
-        email: "divya.krishnan@gmail.com",
-        phone: "+91 96789 01234",
-        plan: "Premium Reader",
-        joinDate: "01 Sep 2026",
-        expiryDate: "01 Oct 2026",
-        status: "Active",
-        reservations: 5,
-    },
-
-    {
-        id: "LIB2026010",
-        name: "Aditya Rao",
-        email: "aditya.rao@gmail.com",
-        phone: "+91 97890 12345",
-        plan: "Premium Reader",
-        joinDate: "25 Aug 2026",
-        expiryDate: "25 Sep 2026",
-        status: "Expiring Soon",
-        reservations: 8,
-    },
-
-    {
-        id: "LIB2026011",
-        name: "Nisha Kapoor",
-        email: "nisha.kapoor@gmail.com",
-        phone: "+91 98901 23456",
-        plan: "Basic Reader",
-        joinDate: "08 Aug 2026",
-        expiryDate: "08 Sep 2026",
-        status: "Expired",
-        reservations: 4,
-    },
-
-    {
-        id: "LIB2026012",
-        name: "Rohan Das",
-        email: "rohan.das@gmail.com",
-        phone: "+91 99012 34567",
-        plan: "Premium Reader",
-        joinDate: "02 Sep 2026",
-        expiryDate: "02 Oct 2026",
-        status: "Active",
-        reservations: 10,
-    },
-];
+const API_BASE =
+    "http://localhost:5000/api/admin/members";
 
 
 /* =========================================================
@@ -162,6 +29,59 @@ function AdminMembers() {
 
     const location = useLocation();
     const navigate = useNavigate();
+
+
+    /* =====================================================
+       STATES
+    ===================================================== */
+
+    const [members, setMembers] = useState([]);
+
+    const [searchTerm, setSearchTerm] =
+        useState("");
+
+    const [statusFilter, setStatusFilter] =
+        useState("All");
+
+    const [selectedMember, setSelectedMember] =
+        useState(null);
+
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
+
+
+    /* =====================================================
+       ADMIN INFORMATION
+    ===================================================== */
+
+    const storedAdmin = useMemo(() => {
+
+        try {
+
+            return JSON.parse(
+                localStorage.getItem("adminUser")
+            );
+
+        } catch {
+
+            return null;
+
+        }
+
+    }, []);
+
+
+    const adminName =
+        storedAdmin?.name ||
+        "Administrator";
+
+
+    const adminEmail =
+        storedAdmin?.email ||
+        "admin@libraspace.com";
 
 
     /* =====================================================
@@ -178,27 +98,132 @@ function AdminMembers() {
 
 
     /* =====================================================
-       LOGOUT
+       AUTH HEADERS
     ===================================================== */
 
-    const handleLogout = () => {
+    const getHeaders = () => {
 
-        navigate("/admin/login");
+        const token =
+            localStorage.getItem("adminToken");
+
+        return {
+
+            "Content-Type":
+                "application/json",
+
+            ...(token
+                ? {
+                    Authorization:
+                        `Bearer ${token}`
+                }
+                : {}),
+
+        };
 
     };
 
 
     /* =====================================================
-       STATES
+       LOAD MEMBERS
     ===================================================== */
 
-    const [members, setMembers] = useState(initialMembers);
+    const loadMembers = async () => {
 
-    const [searchTerm, setSearchTerm] = useState("");
+        try {
 
-    const [statusFilter, setStatusFilter] = useState("All");
+            setLoading(true);
+            setError("");
 
-    const [selectedMember, setSelectedMember] = useState(null);
+
+            const response =
+                await fetch(
+                    API_BASE,
+                    {
+                        method: "GET",
+                        headers: getHeaders(),
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Failed to load members."
+                );
+
+            }
+
+
+            setMembers(
+                Array.isArray(data.members)
+                    ? data.members
+                    : []
+            );
+
+
+        } catch (err) {
+
+            console.error(
+                "Load members error:",
+                err
+            );
+
+            setError(
+                err.message ||
+                "Unable to load members."
+            );
+
+        } finally {
+
+            setLoading(false);
+
+        }
+
+    };
+
+
+    /* =====================================================
+       LOAD ON PAGE OPEN
+    ===================================================== */
+
+    useEffect(() => {
+
+        loadMembers();
+
+    }, []);
+
+
+    /* =====================================================
+       LOGOUT
+    ===================================================== */
+
+    const handleLogout = () => {
+
+        localStorage.removeItem(
+            "adminToken"
+        );
+
+        localStorage.removeItem(
+            "adminUser"
+        );
+
+        localStorage.removeItem(
+            "token"
+        );
+
+        localStorage.removeItem(
+            "user"
+        );
+
+
+        navigate("/admin/login");
+
+    };
 
 
     /* =====================================================
@@ -207,24 +232,66 @@ function AdminMembers() {
 
     const stats = useMemo(() => {
 
-        return {
+        const currentMonth =
+            new Date().getMonth();
 
-            total: members.length,
+        const currentYear =
+            new Date().getFullYear();
 
-            active: members.filter(
+
+        const active =
+            members.filter(
                 (member) =>
                     member.status === "Active"
-            ).length,
+            ).length;
 
-            newMembers: members.filter(
-                (member) =>
-                    member.joinDate.includes("Sep 2026")
-            ).length,
 
-            expiring: members.filter(
+        const expiring =
+            members.filter(
                 (member) =>
-                    member.status === "Expiring Soon"
-            ).length,
+                    member.status ===
+                    "Expiring Soon"
+            ).length;
+
+
+        const newMembers =
+            members.filter((member) => {
+
+                if (!member.createdAt &&
+                    !member.joinDate) {
+
+                    return false;
+
+                }
+
+
+                const date =
+                    new Date(
+                        member.createdAt ||
+                        member.joinDate
+                    );
+
+
+                return (
+                    date.getMonth() ===
+                    currentMonth &&
+                    date.getFullYear() ===
+                    currentYear
+                );
+
+            }).length;
+
+
+        return {
+
+            total:
+                members.length,
+
+            active,
+
+            newMembers,
+
+            expiring,
 
         };
 
@@ -237,54 +304,67 @@ function AdminMembers() {
 
     const filteredMembers = useMemo(() => {
 
-        return members.filter((member) => {
-
-            const search =
-                searchTerm
-                    .toLowerCase()
-                    .trim();
+        const search =
+            searchTerm
+                .toLowerCase()
+                .trim();
 
 
-            const matchesSearch =
-
-                member.name
-                    .toLowerCase()
-                    .includes(search)
-
-                ||
-
-                member.email
-                    .toLowerCase()
-                    .includes(search)
-
-                ||
-
-                member.id
-                    .toLowerCase()
-                    .includes(search)
-
-                ||
-
-                member.plan
-                    .toLowerCase()
-                    .includes(search);
+        return members.filter(
+            (member) => {
 
 
-            const matchesStatus =
+                const matchesSearch =
 
-                statusFilter === "All"
+                    String(
+                        member.name || ""
+                    )
+                        .toLowerCase()
+                        .includes(search)
 
-                ||
+                    ||
 
-                member.status === statusFilter;
+                    String(
+                        member.email || ""
+                    )
+                        .toLowerCase()
+                        .includes(search)
+
+                    ||
+
+                    String(
+                        member.id || ""
+                    )
+                        .toLowerCase()
+                        .includes(search)
+
+                    ||
+
+                    String(
+                        member.plan || ""
+                    )
+                        .toLowerCase()
+                        .includes(search);
 
 
-            return (
-                matchesSearch &&
-                matchesStatus
-            );
+                const matchesStatus =
 
-        });
+                    statusFilter ===
+                    "All"
+
+                    ||
+
+                    member.status ===
+                    statusFilter;
+
+
+                return (
+                    matchesSearch &&
+                    matchesStatus
+                );
+
+            }
+        );
 
     }, [
         members,
@@ -297,41 +377,74 @@ function AdminMembers() {
        TOGGLE MEMBER STATUS
     ===================================================== */
 
-    const toggleMemberStatus = (id) => {
+    const toggleMemberStatus = async (
+        member
+    ) => {
 
-        setMembers((currentMembers) =>
+        try {
 
-            currentMembers.map((member) => {
-
-                if (member.id !== id) {
-
-                    return member;
-
-                }
+            const isCurrentlyActive =
+                member.isActive !== false;
 
 
-                return {
-
-                    ...member,
-
-                    status:
-                        member.status === "Active"
-                            ? "Inactive"
-                            : "Active",
-
-                };
-
-            })
-
-        );
+            const newStatus =
+                !isCurrentlyActive;
 
 
-        setSelectedMember(null);
+            const response =
+                await fetch(
+                    `${API_BASE}/${member._id || member.id}/status`,
+                    {
+                        method: "PATCH",
+                        headers: getHeaders(),
+                        body: JSON.stringify({
+                            isActive: newStatus
+                        }),
+                    }
+                );
 
 
-        alert(
-            "Member status updated successfully."
-        );
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to update member status."
+                );
+
+            }
+
+
+            await loadMembers();
+
+
+            setSelectedMember(null);
+
+
+            alert(
+                newStatus
+                    ? "Member activated successfully."
+                    : "Member deactivated successfully."
+            );
+
+
+        } catch (err) {
+
+            console.error(
+                "Member status update error:",
+                err
+            );
+
+
+            alert(
+                err.message ||
+                "Failed to update member status."
+            );
+
+        }
 
     };
 
@@ -364,6 +477,10 @@ function AdminMembers() {
     };
 
 
+    /* =====================================================
+       RENDER
+    ===================================================== */
+
     return (
 
         <div className="admin-members-page">
@@ -376,9 +493,7 @@ function AdminMembers() {
             <aside className="admin-sidebar">
 
 
-                {/* =================================================
-                    LOGO
-                ================================================= */}
+                {/* LOGO */}
 
                 <div className="admin-sidebar-logo">
 
@@ -387,7 +502,6 @@ function AdminMembers() {
                         <span className="admin-logo-icon">
                             📚
                         </span>
-
 
                         <div>
 
@@ -406,14 +520,10 @@ function AdminMembers() {
                 </div>
 
 
-                {/* =================================================
-                    NAVIGATION
-                ================================================= */}
+                {/* NAVIGATION */}
 
                 <nav className="admin-navigation">
 
-
-                    {/* MAIN MENU */}
 
                     <p className="admin-nav-title">
                         MAIN MENU
@@ -438,25 +548,7 @@ function AdminMembers() {
                     </Link>
 
 
-                    {/* BOOKS */}
-
-                    <Link
-                        to="/admin/books"
-                        className={`admin-nav-link ${isActive(
-                            "/admin/books"
-                        )}`}
-                    >
-
-                        <span>
-                            📚
-                        </span>
-
-                        Manage Books
-
-                    </Link>
-
-
-                    {/* SEATS */}
+                    {/* MANAGE SEATS */}
 
                     <Link
                         to="/admin/seats"
@@ -492,9 +584,7 @@ function AdminMembers() {
                     </Link>
 
 
-                    {/* =================================================
-                        MANAGEMENT
-                    ================================================= */}
+                    {/* MANAGEMENT */}
 
                     <p className="admin-nav-title second-title">
                         MANAGEMENT
@@ -573,9 +663,7 @@ function AdminMembers() {
                     </Link>
 
 
-                    {/* =================================================
-                        SYSTEM
-                    ================================================= */}
+                    {/* SYSTEM */}
 
                     <p className="admin-nav-title second-title">
                         SYSTEM
@@ -599,23 +687,12 @@ function AdminMembers() {
 
                     </Link>
 
-
                 </nav>
 
 
-                {/* =================================================
-                    SIDEBAR BOTTOM
-                ================================================= */}
+                {/* SIDEBAR BOTTOM */}
 
                 <div className="admin-sidebar-bottom">
-
-
-                    {/* STUDENT PORTAL */}
-
-                   
-
-
-                    {/* LOGOUT */}
 
                     <button
                         className="admin-logout-button"
@@ -630,9 +707,7 @@ function AdminMembers() {
 
                     </button>
 
-
                 </div>
-
 
             </aside>
 
@@ -644,9 +719,7 @@ function AdminMembers() {
             <main className="admin-main">
 
 
-                {/* =================================================
-                    TOPBAR
-                ================================================= */}
+                {/* TOPBAR */}
 
                 <header className="admin-topbar">
 
@@ -686,44 +759,40 @@ function AdminMembers() {
 
                         <div className="admin-profile">
 
-
                             <div className="admin-avatar">
-                                A
+
+                                {adminName
+                                    .charAt(0)
+                                    .toUpperCase()}
+
                             </div>
 
 
                             <div className="admin-profile-info">
 
                                 <strong>
-                                    Administrator
+                                    {adminName}
                                 </strong>
 
                                 <small>
-                                    admin@libraspace.com
+                                    {adminEmail}
                                 </small>
 
                             </div>
 
-
                         </div>
 
-
                     </div>
-
 
                 </header>
 
 
-                {/* =================================================
-                    CONTENT
-                ================================================= */}
+                {/* CONTENT */}
 
                 <div className="members-content">
 
 
-                    {/* =================================================
-                        BREADCRUMB
-                    ================================================= */}
+                    {/* BREADCRUMB */}
 
                     <div className="admin-breadcrumb">
 
@@ -742,12 +811,9 @@ function AdminMembers() {
                     </div>
 
 
-                    {/* =================================================
-                        PAGE HEADER
-                    ================================================= */}
+                    {/* PAGE HEADER */}
 
                     <section className="page-header">
-
 
                         <div>
 
@@ -770,7 +836,6 @@ function AdminMembers() {
                         <div className="header-icon">
                             👥
                         </div>
-
 
                     </section>
 
@@ -889,19 +954,15 @@ function AdminMembers() {
 
                         </div>
 
-
                     </section>
 
 
-                    {/* =================================================
-                        OVERVIEW BANNER
-                    ================================================= */}
+                    {/* OVERVIEW BANNER */}
 
                     <section className="members-banner">
 
 
                         <div className="banner-content">
-
 
                             <div className="banner-icon">
                                 👥
@@ -924,7 +985,6 @@ function AdminMembers() {
                                 </p>
 
                             </div>
-
 
                         </div>
 
@@ -951,13 +1011,10 @@ function AdminMembers() {
 
                         </div>
 
-
                     </section>
 
 
-                    {/* =================================================
-                        MEMBER DIRECTORY
-                    ================================================= */}
+                    {/* MEMBER DIRECTORY */}
 
                     <section className="members-panel">
 
@@ -965,7 +1022,6 @@ function AdminMembers() {
                         {/* PANEL HEADER */}
 
                         <div className="panel-header">
-
 
                             <div>
 
@@ -993,13 +1049,10 @@ function AdminMembers() {
 
                             </div>
 
-
                         </div>
 
 
-                        {/* =================================================
-                            FILTERS
-                        ================================================= */}
+                        {/* FILTERS */}
 
                         <div className="filters">
 
@@ -1026,7 +1079,7 @@ function AdminMembers() {
                             </div>
 
 
-                            {/* FILTER */}
+                            {/* STATUS FILTER */}
 
                             <div className="filter-box">
 
@@ -1067,16 +1120,45 @@ function AdminMembers() {
 
                             </div>
 
-
                         </div>
 
 
-                        {/* =================================================
-                            TABLE
-                        ================================================= */}
+                        {/* ERROR */}
+
+                        {error && (
+
+                            <div
+                                style={{
+                                    padding: "16px",
+                                    marginBottom: "20px",
+                                    borderRadius: "10px",
+                                    background: "#fdf0f0",
+                                    color: "#b45353",
+                                    border: "1px solid #efcccc"
+                                }}
+                            >
+
+                                {error}
+
+                                <button
+                                    type="button"
+                                    onClick={loadMembers}
+                                    style={{
+                                        marginLeft: "12px",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    Retry
+                                </button>
+
+                            </div>
+
+                        )}
+
+
+                        {/* TABLE */}
 
                         <div className="members-table-wrapper">
-
 
                             <table className="members-table">
 
@@ -1125,13 +1207,45 @@ function AdminMembers() {
                                 <tbody>
 
 
-                                    {filteredMembers.length > 0 ? (
+                                    {loading ? (
+
+                                        <tr>
+
+                                            <td
+                                                colSpan="8"
+                                                className="no-results"
+                                            >
+
+                                                <div>
+
+                                                    <span>
+                                                        ⏳
+                                                    </span>
+
+                                                    <h3>
+                                                        Loading members...
+                                                    </h3>
+
+                                                    <p>
+                                                        Fetching member data from MongoDB.
+                                                    </p>
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+
+                                    ) : filteredMembers.length > 0 ? (
 
                                         filteredMembers.map(
                                             (member) => (
 
                                                 <tr
-                                                    key={member.id}
+                                                    key={
+                                                        member._id ||
+                                                        member.id
+                                                    }
                                                 >
 
 
@@ -1141,10 +1255,12 @@ function AdminMembers() {
 
                                                         <div className="member-info">
 
-
                                                             <div className="member-avatar">
 
-                                                                {member.name
+                                                                {String(
+                                                                    member.name ||
+                                                                    "M"
+                                                                )
                                                                     .charAt(0)
                                                                     .toUpperCase()}
 
@@ -1162,7 +1278,6 @@ function AdminMembers() {
                                                                 </span>
 
                                                             </div>
-
 
                                                         </div>
 
@@ -1204,7 +1319,8 @@ function AdminMembers() {
 
                                                             </span>
 
-                                                            {member.plan}
+                                                            {member.plan ||
+                                                                "No Membership"}
 
                                                         </span>
 
@@ -1216,7 +1332,8 @@ function AdminMembers() {
                                                     <td>
 
                                                         <span className="date-text">
-                                                            {member.joinDate}
+                                                            {member.joinDate ||
+                                                                "—"}
                                                         </span>
 
                                                     </td>
@@ -1227,7 +1344,8 @@ function AdminMembers() {
                                                     <td>
 
                                                         <span className="date-text">
-                                                            {member.expiryDate}
+                                                            {member.expiryDate ||
+                                                                "—"}
                                                         </span>
 
                                                     </td>
@@ -1244,7 +1362,8 @@ function AdminMembers() {
                                                             </span>
 
                                                             <strong>
-                                                                {member.reservations}
+                                                                {member.reservations ??
+                                                                    0}
                                                             </strong>
 
                                                         </div>
@@ -1264,7 +1383,8 @@ function AdminMembers() {
 
                                                             <span className="status-dot"></span>
 
-                                                            {member.status}
+                                                            {member.status ||
+                                                                "Unknown"}
 
                                                         </span>
 
@@ -1302,30 +1422,28 @@ function AdminMembers() {
                                                                 type="button"
                                                                 className="action-btn toggle"
                                                                 title={
-                                                                    member.status ===
-                                                                    "Active"
+                                                                    member.isActive !==
+                                                                    false
                                                                         ? "Deactivate Member"
                                                                         : "Activate Member"
                                                                 }
                                                                 onClick={() =>
                                                                     toggleMemberStatus(
-                                                                        member.id
+                                                                        member
                                                                     )
                                                                 }
                                                             >
 
-                                                                {member.status ===
-                                                                "Active"
+                                                                {member.isActive !==
+                                                                false
                                                                     ? "🚫"
                                                                     : "✓"}
 
                                                             </button>
 
-
                                                         </div>
 
                                                     </td>
-
 
                                                 </tr>
 
@@ -1333,9 +1451,6 @@ function AdminMembers() {
                                         )
 
                                     ) : (
-
-
-                                        /* NO RESULTS */
 
                                         <tr>
 
@@ -1367,30 +1482,22 @@ function AdminMembers() {
 
                                     )}
 
-
                                 </tbody>
-
 
                             </table>
 
-
                         </div>
-
 
                     </section>
 
 
-                    {/* =================================================
-                        MANAGEMENT TIP
-                    ================================================= */}
+                    {/* MANAGEMENT TIP */}
 
                     <section className="management-tip">
-
 
                         <div className="tip-icon">
                             💡
                         </div>
-
 
                         <div>
 
@@ -1406,13 +1513,10 @@ function AdminMembers() {
 
                         </div>
 
-
                     </section>
 
 
-                    {/* =================================================
-                        FOOTER
-                    ================================================= */}
+                    {/* FOOTER */}
 
                     <footer className="admin-footer">
 
@@ -1425,7 +1529,6 @@ function AdminMembers() {
                         </span>
 
                     </footer>
-
 
                 </div>
 
@@ -1443,7 +1546,6 @@ function AdminMembers() {
                         }
                     >
 
-
                         <div
                             className="member-modal"
                             onClick={(e) =>
@@ -1455,7 +1557,6 @@ function AdminMembers() {
                             {/* MODAL HEADER */}
 
                             <div className="modal-header">
-
 
                                 <div>
 
@@ -1482,18 +1583,19 @@ function AdminMembers() {
 
                                 </button>
 
-
                             </div>
 
 
-                            {/* MEMBER PROFILE */}
+                            {/* PROFILE */}
 
                             <div className="modal-member">
 
-
                                 <div className="modal-avatar">
 
-                                    {selectedMember.name
+                                    {String(
+                                        selectedMember.name ||
+                                        "M"
+                                    )
                                         .charAt(0)
                                         .toUpperCase()}
 
@@ -1512,11 +1614,10 @@ function AdminMembers() {
 
                                 </div>
 
-
                             </div>
 
 
-                            {/* MEMBER DETAILS */}
+                            {/* DETAILS */}
 
                             <div className="modal-details">
 
@@ -1541,7 +1642,8 @@ function AdminMembers() {
                                     </span>
 
                                     <strong>
-                                        {selectedMember.phone}
+                                        {selectedMember.phone ||
+                                            "—"}
                                     </strong>
 
                                 </div>
@@ -1554,7 +1656,8 @@ function AdminMembers() {
                                     </span>
 
                                     <strong>
-                                        {selectedMember.plan}
+                                        {selectedMember.plan ||
+                                            "No Membership"}
                                     </strong>
 
                                 </div>
@@ -1567,7 +1670,8 @@ function AdminMembers() {
                                     </span>
 
                                     <strong>
-                                        {selectedMember.reservations}
+                                        {selectedMember.reservations ??
+                                            0}
                                     </strong>
 
                                 </div>
@@ -1580,7 +1684,8 @@ function AdminMembers() {
                                     </span>
 
                                     <strong>
-                                        {selectedMember.joinDate}
+                                        {selectedMember.joinDate ||
+                                            "—"}
                                     </strong>
 
                                 </div>
@@ -1593,7 +1698,8 @@ function AdminMembers() {
                                     </span>
 
                                     <strong>
-                                        {selectedMember.expiryDate}
+                                        {selectedMember.expiryDate ||
+                                            "—"}
                                     </strong>
 
                                 </div>
@@ -1615,14 +1721,14 @@ function AdminMembers() {
 
                                             <span className="status-dot"></span>
 
-                                            {selectedMember.status}
+                                            {selectedMember.status ||
+                                                "Unknown"}
 
                                         </span>
 
                                     </strong>
 
                                 </div>
-
 
                             </div>
 
@@ -1635,20 +1741,20 @@ function AdminMembers() {
                                 <button
                                     type="button"
                                     className={
-                                        selectedMember.status ===
-                                        "Active"
+                                        selectedMember.isActive !==
+                                        false
                                             ? "deactivate-btn"
                                             : "activate-btn"
                                     }
                                     onClick={() =>
                                         toggleMemberStatus(
-                                            selectedMember.id
+                                            selectedMember
                                         )
                                     }
                                 >
 
-                                    {selectedMember.status ===
-                                    "Active"
+                                    {selectedMember.isActive !==
+                                    false
                                         ? "🚫 Deactivate Member"
                                         : "✓ Activate Member"}
 
@@ -1667,17 +1773,13 @@ function AdminMembers() {
 
                                 </button>
 
-
                             </div>
 
-
                         </div>
-
 
                     </div>
 
                 )}
-
 
             </main>
 

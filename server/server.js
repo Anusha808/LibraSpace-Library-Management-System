@@ -4,6 +4,10 @@ const dotenv = require("dotenv");
 
 const connectDB = require("./config/db");
 
+// ==========================================================
+// ROUTES
+// ==========================================================
+
 const authRoutes =
     require("./routes/authRoutes");
 
@@ -24,6 +28,9 @@ const adminRoutes =
 
 const seatRoutes =
     require("./routes/seatRoutes");
+
+const settingsRoutes =
+    require("./routes/settingsRoutes");
 
 
 // ==========================================================
@@ -52,12 +59,14 @@ connectDB();
 // ==========================================================
 
 // Allow frontend requests
+
 app.use(
     cors()
 );
 
 
 // Read JSON request bodies
+
 app.use(
     express.json()
 );
@@ -65,6 +74,11 @@ app.use(
 
 // ==========================================================
 // AUTHENTICATION ROUTES
+// ==========================================================
+//
+// POST /api/auth/register
+// POST /api/auth/login
+//
 // ==========================================================
 
 app.use(
@@ -76,6 +90,12 @@ app.use(
 // ==========================================================
 // RESERVATION ROUTES
 // ==========================================================
+//
+// POST   /api/reservations
+// GET    /api/reservations/my
+// PUT    /api/reservations/:id/cancel
+//
+// ==========================================================
 
 app.use(
     "/api/reservations",
@@ -85,6 +105,14 @@ app.use(
 
 // ==========================================================
 // MEMBERSHIP ROUTES
+// ==========================================================
+//
+// POST /api/memberships
+// GET  /api/memberships/my
+// GET  /api/memberships/days-remaining
+// PUT  /api/memberships/renew
+// PUT  /api/memberships/cancel
+//
 // ==========================================================
 
 app.use(
@@ -96,6 +124,10 @@ app.use(
 // ==========================================================
 // MEMBERSHIP PLAN ROUTES
 // ==========================================================
+//
+// GET /api/membership-plans
+//
+// ==========================================================
 
 app.use(
     "/api/membership-plans",
@@ -105,6 +137,12 @@ app.use(
 
 // ==========================================================
 // PAYMENT ROUTES
+// ==========================================================
+//
+// POST /api/payments/create-order
+// POST /api/payments/verify
+// GET  /api/payments/my
+//
 // ==========================================================
 
 app.use(
@@ -120,9 +158,27 @@ app.use(
 // Dashboard:
 // GET /api/admin/dashboard
 //
-// General admin routes
-// are handled inside adminRoutes.
+// Reservations:
+// GET    /api/admin/reservations
+// PATCH  /api/admin/reservations/:id/status
+// DELETE /api/admin/reservations/:id
 //
+// Members:
+// GET   /api/admin/members
+// PATCH /api/admin/members/:id/status
+//
+// Memberships:
+// GET   /api/admin/memberships
+// PATCH /api/admin/memberships/:id/renew
+//
+// Payments:
+// GET   /api/admin/payments
+// PATCH /api/admin/payments/:id/status
+//
+// Reports:
+// GET /api/admin/reports
+//
+// ==========================================================
 
 app.use(
     "/api/admin",
@@ -146,10 +202,32 @@ app.use(
 // Delete seat:
 // DELETE /api/admin/seats/:id
 //
+// ==========================================================
 
 app.use(
     "/api/admin/seats",
     seatRoutes
+);
+
+
+// ==========================================================
+// ADMIN SETTINGS ROUTES
+// ==========================================================
+//
+// Get settings:
+// GET /api/admin/settings
+//
+// Update settings:
+// PUT /api/admin/settings
+//
+// Change admin password:
+// PUT /api/admin/settings/password
+//
+// ==========================================================
+
+app.use(
+    "/api/admin/settings",
+    settingsRoutes
 );
 
 
@@ -162,6 +240,8 @@ app.get(
     (req, res) => {
 
         res.json({
+            success: true,
+
             message:
                 "LibraSpace Backend is running successfully!"
         });

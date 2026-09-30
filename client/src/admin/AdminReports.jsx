@@ -1,209 +1,1056 @@
-import React, { useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, {
+    useEffect,
+    useMemo,
+    useState
+} from "react";
+
+import {
+    Link,
+    useLocation,
+    useNavigate
+} from "react-router-dom";
+
 import "./AdminReports.css";
 
-const monthlyData = [
-    {
-        month: "Jan",
-        revenue: 82400,
-        reservations: 420,
-        members: 24,
-    },
-    {
-        month: "Feb",
-        revenue: 91650,
-        reservations: 455,
-        members: 29,
-    },
-    {
-        month: "Mar",
-        revenue: 104200,
-        reservations: 510,
-        members: 34,
-    },
-    {
-        month: "Apr",
-        revenue: 112750,
-        reservations: 548,
-        members: 31,
-    },
-    {
-        month: "May",
-        revenue: 124500,
-        reservations: 590,
-        members: 38,
-    },
-    {
-        month: "Jun",
-        revenue: 131900,
-        reservations: 620,
-        members: 42,
-    },
-    {
-        month: "Jul",
-        revenue: 139250,
-        reservations: 665,
-        members: 47,
-    },
-    {
-        month: "Aug",
-        revenue: 143800,
-        reservations: 710,
-        members: 51,
-    },
-    {
-        month: "Sep",
-        revenue: 148760,
-        reservations: 748,
-        members: 28,
-    },
-];
 
-const membershipPlans = [
-    {
-        name: "Premium Reader",
-        count: 312,
-        percentage: 67.5,
-        icon: "fa-crown",
-    },
-    {
-        name: "Basic Reader",
-        count: 150,
-        percentage: 32.5,
-        icon: "fa-book-open",
-    },
-];
+/* =========================================================
+   API
+========================================================= */
 
-const seatUsage = [
-    {
-        name: "Reading Hall",
-        percentage: 78,
-        seats: 39,
-        total: 50,
-        icon: "fa-book-open-reader",
-    },
-    {
-        name: "Reference Hall",
-        percentage: 64,
-        seats: 16,
-        total: 25,
-        icon: "fa-book",
-    },
-    {
-        name: "Silent Zone",
-        percentage: 52,
-        seats: 13,
-        total: 25,
-        icon: "fa-volume-xmark",
-    },
-];
+const API_BASE =
+    "http://localhost:5000/api/admin/reports";
 
-const recentPerformance = [
-    {
-        month: "September 2026",
-        revenue: "₹1,48,760",
-        reservations: 748,
-        members: 28,
-        occupancy: "58%",
-    },
-    {
-        month: "August 2026",
-        revenue: "₹1,43,800",
-        reservations: 710,
-        members: 51,
-        occupancy: "61%",
-    },
-    {
-        month: "July 2026",
-        revenue: "₹1,39,250",
-        reservations: 665,
-        members: 47,
-        occupancy: "57%",
-    },
-    {
-        month: "June 2026",
-        revenue: "₹1,31,900",
-        reservations: 620,
-        members: 42,
-        occupancy: "54%",
-    },
-    {
-        month: "May 2026",
-        revenue: "₹1,24,500",
-        reservations: 590,
-        members: 38,
-        occupancy: "52%",
-    },
-];
+
+/* =========================================================
+   ADMIN REPORTS
+========================================================= */
 
 function AdminReports() {
 
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [period, setPeriod] = useState("year");
-    const [activeChart, setActiveChart] = useState("revenue");
 
-    const isActive = (path) => {
-        return location.pathname === path ? "active" : "";
-    };
+    /* =====================================================
+       STATES
+    ===================================================== */
 
-    const handleLogout = () => {
-        navigate("/admin/login");
-    };
+    const [reportData, setReportData] =
+        useState(null);
 
-    const reportStats = useMemo(() => {
+    const [loading, setLoading] =
+        useState(true);
 
-        const totalRevenue = monthlyData.reduce(
-            (sum, item) => sum + item.revenue,
-            0
-        );
+    const [error, setError] =
+        useState("");
 
-        const totalReservations = monthlyData.reduce(
-            (sum, item) => sum + item.reservations,
-            0
-        );
+    const [period, setPeriod] =
+        useState("year");
 
-        const totalNewMembers = monthlyData.reduce(
-            (sum, item) => sum + item.members,
-            0
-        );
+    const [activeChart, setActiveChart] =
+        useState("revenue");
 
-        return {
-            totalRevenue,
-            totalReservations,
-            totalNewMembers,
-            occupancy: 58,
-        };
+
+    /* =====================================================
+       ADMIN INFORMATION
+    ===================================================== */
+
+    const adminUser = useMemo(() => {
+
+        try {
+
+            return JSON.parse(
+                localStorage.getItem(
+                    "adminUser"
+                )
+            );
+
+        } catch {
+
+            return null;
+
+        }
 
     }, []);
 
-    const maxRevenue = Math.max(
-        ...monthlyData.map((item) => item.revenue)
-    );
 
-    const maxReservations = Math.max(
-        ...monthlyData.map((item) => item.reservations)
-    );
+    const adminName =
+        adminUser?.name ||
+        "Administrator";
 
-    const maxMembers = Math.max(
-        ...monthlyData.map((item) => item.members)
-    );
 
-    const handleExport = () => {
-        alert(
-            "Report export feature will be connected to the backend later."
-        );
+    const adminEmail =
+        adminUser?.email ||
+        "admin@libraspace.com";
+
+
+    /* =====================================================
+       ACTIVE SIDEBAR
+    ===================================================== */
+
+    const isActive = (path) => {
+
+        return location.pathname === path
+            ? "active"
+            : "";
+
     };
 
+
+    /* =====================================================
+       AUTH HEADERS
+    ===================================================== */
+
+    const getHeaders = () => {
+
+        const token =
+            localStorage.getItem(
+                "adminToken"
+            );
+
+
+        return {
+
+            "Content-Type":
+                "application/json",
+
+            ...(token
+                ? {
+                    Authorization:
+                        `Bearer ${token}`
+                }
+                : {})
+
+        };
+
+    };
+
+
+    /* =====================================================
+       LOAD REPORTS
+    ===================================================== */
+
+    const loadReports = async () => {
+
+        try {
+
+            setLoading(true);
+
+            setError("");
+
+
+            const response =
+                await fetch(
+                    API_BASE,
+                    {
+                        method: "GET",
+                        headers:
+                            getHeaders()
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to load reports."
+                );
+
+            }
+
+
+            if (!data.success) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to load reports."
+                );
+
+            }
+
+
+            setReportData(
+                data
+            );
+
+
+        } catch (err) {
+
+            console.error(
+                "Load reports error:",
+                err
+            );
+
+
+            setError(
+                err.message ||
+                "Unable to load reports."
+            );
+
+        } finally {
+
+            setLoading(false);
+
+        }
+
+    };
+
+
+    /* =====================================================
+       LOAD ON PAGE OPEN
+    ===================================================== */
+
+    useEffect(() => {
+
+        loadReports();
+
+    }, []);
+
+
+    /* =====================================================
+       LOGOUT
+    ===================================================== */
+
+    const handleLogout = () => {
+
+        localStorage.removeItem(
+            "adminToken"
+        );
+
+        localStorage.removeItem(
+            "adminUser"
+        );
+
+        localStorage.removeItem(
+            "token"
+        );
+
+        localStorage.removeItem(
+            "user"
+        );
+
+
+        navigate(
+            "/admin/login"
+        );
+
+    };
+
+
+    /* =====================================================
+       FORMAT AMOUNT
+    ===================================================== */
+
+    const formatAmount = (
+        amount
+    ) => {
+
+        return `₹${Number(
+            amount || 0
+        ).toLocaleString(
+            "en-IN"
+        )}`;
+
+    };
+
+
+    /* =====================================================
+       GET MONTHLY DATA
+    ===================================================== */
+
+    const monthlyData =
+        reportData?.monthlyData || [];
+
+
+    /* =====================================================
+       PERIOD DATA
+    ===================================================== */
+
+    const selectedPeriodData =
+        useMemo(() => {
+
+            if (
+                monthlyData.length === 0
+            ) {
+
+                return [];
+
+            }
+
+
+            if (
+                period === "month"
+            ) {
+
+                return monthlyData.slice(
+                    -1
+                );
+
+            }
+
+
+            if (
+                period === "quarter"
+            ) {
+
+                return monthlyData.slice(
+                    -3
+                );
+
+            }
+
+
+            return monthlyData;
+
+        }, [
+            monthlyData,
+            period
+        ]);
+
+
+    /* =====================================================
+       AGGREGATE PERIOD DATA
+    ===================================================== */
+
+    const periodStats =
+        useMemo(() => {
+
+            const totalRevenue =
+                selectedPeriodData.reduce(
+                    (
+                        total,
+                        item
+                    ) =>
+                        total +
+                        Number(
+                            item.revenue ||
+                            0
+                        ),
+                    0
+                );
+
+
+            const totalReservations =
+                selectedPeriodData.reduce(
+                    (
+                        total,
+                        item
+                    ) =>
+                        total +
+                        Number(
+                            item.reservations ||
+                            0
+                        ),
+                    0
+                );
+
+
+            const totalMembers =
+                selectedPeriodData.reduce(
+                    (
+                        total,
+                        item
+                    ) =>
+                        total +
+                        Number(
+                            item.members ||
+                            0
+                        ),
+                    0
+                );
+
+
+            const successfulPayments =
+                selectedPeriodData.reduce(
+                    (
+                        total,
+                        item
+                    ) =>
+                        total +
+                        Number(
+                            item.successfulPayments ||
+                            0
+                        ),
+                    0
+                );
+
+
+            const pendingPayments =
+                selectedPeriodData.reduce(
+                    (
+                        total,
+                        item
+                    ) =>
+                        total +
+                        Number(
+                            item.pendingPayments ||
+                            0
+                        ),
+                    0
+                );
+
+
+            const failedPayments =
+                selectedPeriodData.reduce(
+                    (
+                        total,
+                        item
+                    ) =>
+                        total +
+                        Number(
+                            item.failedPayments ||
+                            0
+                        ),
+                    0
+                );
+
+
+            const totalPayments =
+                successfulPayments +
+                pendingPayments +
+                failedPayments;
+
+
+            const averageOccupancy =
+                selectedPeriodData.length > 0
+
+                    ? Math.round(
+                        selectedPeriodData.reduce(
+                            (
+                                total,
+                                item
+                            ) =>
+                                total +
+                                Number(
+                                    item.occupancy ||
+                                    0
+                                ),
+                            0
+                        ) /
+                        selectedPeriodData.length
+                    )
+
+                    : Number(
+                        reportData
+                            ?.seatOverview
+                            ?.occupancy ||
+                        0
+                    );
+
+
+            const pendingAmount =
+                0;
+
+
+            const successRate =
+                totalPayments > 0
+
+                    ? Number(
+                        (
+                            (
+                                successfulPayments /
+                                totalPayments
+                            ) *
+                            100
+                        ).toFixed(1)
+                    )
+
+                    : 0;
+
+
+            const averagePayment =
+                successfulPayments > 0
+
+                    ? Math.round(
+                        totalRevenue /
+                        successfulPayments
+                    )
+
+                    : 0;
+
+
+            return {
+
+                totalRevenue,
+
+                totalReservations,
+
+                totalMembers,
+
+                successfulPayments,
+
+                pendingPayments,
+
+                failedPayments,
+
+                totalPayments,
+
+                pendingAmount,
+
+                averageOccupancy,
+
+                successRate,
+
+                averagePayment
+
+            };
+
+        }, [
+            selectedPeriodData,
+            reportData
+        ]);
+
+
+    /* =====================================================
+       CURRENT MONTH
+    ===================================================== */
+
+    const currentMonthData =
+        monthlyData.length > 0
+
+            ? monthlyData[
+                monthlyData.length - 1
+            ]
+
+            : {
+
+                month:
+                    "Current",
+
+                monthName:
+                    "Current Month",
+
+                year:
+                    new Date()
+                        .getFullYear(),
+
+                revenue:
+                    0,
+
+                reservations:
+                    0,
+
+                members:
+                    0,
+
+                occupancy:
+                    0,
+
+                successfulPayments:
+                    0,
+
+                pendingPayments:
+                    0,
+
+                failedPayments:
+                    0
+
+            };
+
+
+    /* =====================================================
+       PREVIOUS MONTH
+    ===================================================== */
+
+    const previousMonthData =
+        monthlyData.length > 1
+
+            ? monthlyData[
+                monthlyData.length - 2
+            ]
+
+            : {
+
+                revenue:
+                    0,
+
+                reservations:
+                    0,
+
+                members:
+                    0
+
+            };
+
+
+    /* =====================================================
+       GROWTH
+    ===================================================== */
+
+    const calculateGrowth =
+        (
+            current,
+            previous
+        ) => {
+
+            if (
+                Number(previous) === 0
+            ) {
+
+                return Number(current) > 0
+                    ? 100
+                    : 0;
+
+            }
+
+
+            return Number(
+                (
+                    (
+                        (
+                            Number(current) -
+                            Number(previous)
+                        ) /
+                        Number(previous)
+                    ) *
+                    100
+                ).toFixed(1)
+            );
+
+        };
+
+
+    const revenueGrowth =
+        calculateGrowth(
+            currentMonthData.revenue,
+            previousMonthData.revenue
+        );
+
+
+    const reservationGrowth =
+        calculateGrowth(
+            currentMonthData.reservations,
+            previousMonthData.reservations
+        );
+
+
+    const memberGrowth =
+        calculateGrowth(
+            currentMonthData.members,
+            previousMonthData.members
+        );
+
+
+    /* =====================================================
+       GROWTH DISPLAY
+    ===================================================== */
+
+    const growthText =
+        (value) => {
+
+            if (
+                value === null ||
+                value === undefined
+            ) {
+
+                return "—";
+
+            }
+
+
+            return `${
+                value >= 0
+                    ? "+"
+                    : ""
+            }${value}%`;
+
+        };
+
+
+    const growthClass =
+        (value) => {
+
+            return value >= 0
+                ? "positive"
+                : "negative";
+
+        };
+
+
+    /* =====================================================
+       SEAT OVERVIEW
+    ===================================================== */
+
+    const seatOverview =
+        reportData?.seatOverview || {
+
+            total:
+                0,
+
+            used:
+                0,
+
+            available:
+                0,
+
+            occupancy:
+                0,
+
+            sections:
+                []
+
+        };
+
+
+    const seatUsage =
+        seatOverview.sections || [];
+
+
+    /* =====================================================
+       MEMBERSHIP OVERVIEW
+    ===================================================== */
+
+    const membershipOverview =
+        reportData?.membershipOverview || {
+
+            total:
+                0,
+
+            active:
+                0,
+
+            expiringSoon:
+                0,
+
+            expired:
+                0
+
+        };
+
+
+    /* =====================================================
+       MEMBERSHIP PLANS
+    ===================================================== */
+
+    const membershipPlans =
+        reportData?.membershipPlans || [];
+
+
+    /* =====================================================
+       PAYMENT OVERVIEW
+    ===================================================== */
+
+    const paymentOverview =
+        reportData?.paymentOverview || {
+
+            totalTransactions:
+                0,
+
+            successful:
+                0,
+
+            pending:
+                0,
+
+            failed:
+                0,
+
+            totalRevenue:
+                0,
+
+            pendingAmount:
+                0,
+
+            successRate:
+                0,
+
+            averagePayment:
+                0
+
+        };
+
+
+    /* =====================================================
+       MEMBERSHIP PLAN DONUT
+    ===================================================== */
+
+    const donutStyle =
+        useMemo(() => {
+
+            if (
+                membershipPlans.length === 0
+            ) {
+
+                return {};
+
+            }
+
+
+            let currentDegree =
+                0;
+
+
+            const segments =
+                membershipPlans.map(
+                    (
+                        plan,
+                        index
+                    ) => {
+
+                        const percentage =
+                            Number(
+                                plan.percentage ||
+                                0
+                            );
+
+
+                        const start =
+                            currentDegree;
+
+
+                        const end =
+                            currentDegree +
+                            (
+                                percentage *
+                                3.6
+                            );
+
+
+                        currentDegree =
+                            end;
+
+
+                        const segmentColor =
+                            index % 2 === 0
+                                ? "#2589A5"
+                                : "#7CCED5";
+
+
+                        return `${segmentColor} ${start}deg ${end}deg`;
+
+                    }
+                );
+
+
+            return {
+
+                background:
+                    `conic-gradient(${segments.join(
+                        ", "
+                    )})`
+
+            };
+
+        }, [
+            membershipPlans
+        ]);
+
+
+    /* =====================================================
+       MAX CHART VALUES
+    ===================================================== */
+
+    const maxRevenue =
+        Math.max(
+            ...monthlyData.map(
+                (item) =>
+                    Number(
+                        item.revenue || 0
+                    )
+            ),
+            1
+        );
+
+
+    const maxReservations =
+        Math.max(
+            ...monthlyData.map(
+                (item) =>
+                    Number(
+                        item.reservations ||
+                        0
+                    )
+            ),
+            1
+        );
+
+
+    const maxMembers =
+        Math.max(
+            ...monthlyData.map(
+                (item) =>
+                    Number(
+                        item.members ||
+                        0
+                    )
+            ),
+            1
+        );
+
+
+    /* =====================================================
+       REPORT PERIOD LABEL
+    ===================================================== */
+
+    const periodLabel =
+        period === "month"
+
+            ? "This Month"
+
+            : period === "quarter"
+
+                ? "Last 3 Months"
+
+                : "This Year";
+
+
+    /* =====================================================
+       EXPORT REPORT
+    ===================================================== */
+
+    const handleExport =
+        () => {
+
+            if (
+                monthlyData.length === 0
+            ) {
+
+                alert(
+                    "No report data available to export."
+                );
+
+                return;
+
+            }
+
+
+            const rows = [
+
+                [
+                    "Month",
+                    "Revenue",
+                    "Reservations",
+                    "New Members",
+                    "Occupancy",
+                    "Successful Payments",
+                    "Pending Payments",
+                    "Failed Payments"
+                ],
+
+                ...selectedPeriodData.map(
+                    (
+                        item
+                    ) => [
+
+                        `${item.monthName || item.month} ${item.year || ""}`,
+
+                        item.revenue,
+
+                        item.reservations,
+
+                        item.members,
+
+                        `${item.occupancy}%`,
+
+                        item.successfulPayments,
+
+                        item.pendingPayments,
+
+                        item.failedPayments
+
+                    ]
+                )
+
+            ];
+
+
+            const csv =
+                rows
+                    .map(
+                        (
+                            row
+                        ) =>
+                            row
+                                .map(
+                                    (
+                                        value
+                                    ) =>
+                                        `"${String(
+                                            value ?? ""
+                                        ).replace(
+                                            /"/g,
+                                            '""'
+                                        )}"`
+                                )
+                                .join(",")
+                    )
+                    .join("\n");
+
+
+            const blob =
+                new Blob(
+                    [csv],
+                    {
+                        type:
+                            "text/csv;charset=utf-8;"
+                    }
+                );
+
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+
+            link.href =
+                url;
+
+
+            link.download =
+                `LibraSpace-${periodLabel
+                    .replace(
+                        /\s+/g,
+                        "-"
+                    )}-Report.csv`;
+
+
+            document.body.appendChild(
+                link
+            );
+
+
+            link.click();
+
+
+            document.body.removeChild(
+                link
+            );
+
+
+            URL.revokeObjectURL(
+                url
+            );
+
+        };
+
+
+    /* =====================================================
+       RENDER
+    ===================================================== */
+
     return (
+
         <div className="admin-reports-page">
+
 
             {/* =====================================================
                 SIDEBAR
             ===================================================== */}
 
             <aside className="admin-sidebar">
+
 
                 {/* LOGO */}
 
@@ -215,9 +1062,17 @@ function AdminReports() {
                             📚
                         </span>
 
+
                         <div>
-                            <strong>LibraSpace</strong>
-                            <small>Admin Portal</small>
+
+                            <strong>
+                                LibraSpace
+                            </strong>
+
+                            <small>
+                                Admin Portal
+                            </small>
+
                         </div>
 
                     </Link>
@@ -229,10 +1084,13 @@ function AdminReports() {
 
                 <nav className="admin-navigation">
 
+
                     <p className="admin-nav-title">
                         MAIN MENU
                     </p>
 
+
+                    {/* DASHBOARD */}
 
                     <Link
                         to="/admin/dashboard"
@@ -240,21 +1098,17 @@ function AdminReports() {
                             "/admin/dashboard"
                         )}`}
                     >
-                        <span>📊</span>
+
+                        <span>
+                            📊
+                        </span>
+
                         Dashboard
+
                     </Link>
 
 
-                    <Link
-                        to="/admin/books"
-                        className={`admin-nav-link ${isActive(
-                            "/admin/books"
-                        )}`}
-                    >
-                        <span>📚</span>
-                        Manage Books
-                    </Link>
-
+                    {/* MANAGE SEATS */}
 
                     <Link
                         to="/admin/seats"
@@ -262,10 +1116,17 @@ function AdminReports() {
                             "/admin/seats"
                         )}`}
                     >
-                        <span>💺</span>
+
+                        <span>
+                            💺
+                        </span>
+
                         Manage Seats
+
                     </Link>
 
+
+                    {/* RESERVATIONS */}
 
                     <Link
                         to="/admin/reservations"
@@ -273,15 +1134,24 @@ function AdminReports() {
                             "/admin/reservations"
                         )}`}
                     >
-                        <span>📅</span>
+
+                        <span>
+                            📅
+                        </span>
+
                         Reservations
+
                     </Link>
 
+
+                    {/* MANAGEMENT */}
 
                     <p className="admin-nav-title second-title">
                         MANAGEMENT
                     </p>
 
+
+                    {/* MEMBERS */}
 
                     <Link
                         to="/admin/members"
@@ -289,10 +1159,17 @@ function AdminReports() {
                             "/admin/members"
                         )}`}
                     >
-                        <span>👥</span>
+
+                        <span>
+                            👥
+                        </span>
+
                         Members
+
                     </Link>
 
+
+                    {/* MEMBERSHIPS */}
 
                     <Link
                         to="/admin/memberships"
@@ -300,10 +1177,17 @@ function AdminReports() {
                             "/admin/memberships"
                         )}`}
                     >
-                        <span>🎫</span>
+
+                        <span>
+                            🎫
+                        </span>
+
                         Memberships
+
                     </Link>
 
+
+                    {/* PAYMENTS */}
 
                     <Link
                         to="/admin/payments"
@@ -311,10 +1195,17 @@ function AdminReports() {
                             "/admin/payments"
                         )}`}
                     >
-                        <span>💳</span>
+
+                        <span>
+                            💳
+                        </span>
+
                         Payments
+
                     </Link>
 
+
+                    {/* REPORTS */}
 
                     <Link
                         to="/admin/reports"
@@ -322,15 +1213,24 @@ function AdminReports() {
                             "/admin/reports"
                         )}`}
                     >
-                        <span>📈</span>
+
+                        <span>
+                            📈
+                        </span>
+
                         Reports
+
                     </Link>
 
+
+                    {/* SYSTEM */}
 
                     <p className="admin-nav-title second-title">
                         SYSTEM
                     </p>
 
+
+                    {/* SETTINGS */}
 
                     <Link
                         to="/admin/settings"
@@ -338,26 +1238,36 @@ function AdminReports() {
                             "/admin/settings"
                         )}`}
                     >
-                        <span>⚙️</span>
+
+                        <span>
+                            ⚙️
+                        </span>
+
                         Settings
+
                     </Link>
 
                 </nav>
 
 
-                {/* SIDEBAR BOTTOM */}
+                {/* LOGOUT */}
 
                 <div className="admin-sidebar-bottom">
 
-                    
-
-
                     <button
+                        type="button"
                         className="admin-logout-button"
-                        onClick={handleLogout}
+                        onClick={
+                            handleLogout
+                        }
                     >
-                        <span>🚪</span>
+
+                        <span>
+                            🚪
+                        </span>
+
                         Logout
+
                     </button>
 
                 </div>
@@ -371,9 +1281,11 @@ function AdminReports() {
 
             <main className="admin-main">
 
+
                 {/* TOPBAR */}
 
                 <header className="admin-topbar">
+
 
                     <div className="admin-topbar-left">
 
@@ -390,32 +1302,44 @@ function AdminReports() {
 
                     <div className="admin-topbar-right">
 
+
                         <button
+                            type="button"
                             className="admin-notification"
                             title="Notifications"
                             onClick={() =>
-                                alert("No new notifications.")
+                                alert(
+                                    "No new notifications."
+                                )
                             }
                         >
+
                             🔔
+
                             <span></span>
+
                         </button>
 
 
                         <div className="admin-profile">
 
                             <div className="admin-avatar">
-                                A
+
+                                {adminName
+                                    .charAt(0)
+                                    .toUpperCase()}
+
                             </div>
+
 
                             <div className="admin-profile-info">
 
                                 <strong>
-                                    Administrator
+                                    {adminName}
                                 </strong>
 
                                 <small>
-                                    admin@libraspace.com
+                                    {adminEmail}
                                 </small>
 
                             </div>
@@ -433,6 +1357,7 @@ function AdminReports() {
 
                 <div className="admin-content">
 
+
                     {/* BREADCRUMB */}
 
                     <div className="admin-breadcrumb">
@@ -441,7 +1366,9 @@ function AdminReports() {
                             Dashboard
                         </Link>
 
-                        <span>›</span>
+                        <span>
+                            ›
+                        </span>
 
                         <span>
                             Reports & Analytics
@@ -459,8 +1386,11 @@ function AdminReports() {
                             <div className="reports-title-row">
 
                                 <div className="reports-title-icon">
+
                                     <i className="fa-solid fa-chart-line"></i>
+
                                 </div>
+
 
                                 <div>
 
@@ -470,7 +1400,8 @@ function AdminReports() {
 
                                     <p>
                                         Monitor library performance,
-                                        membership growth and revenue.
+                                        membership growth and revenue
+                                        using live system data.
                                     </p>
 
                                 </div>
@@ -482,10 +1413,13 @@ function AdminReports() {
 
                         <div className="reports-header-actions">
 
+
                             <select
                                 value={period}
                                 onChange={(e) =>
-                                    setPeriod(e.target.value)
+                                    setPeriod(
+                                        e.target.value
+                                    )
                                 }
                                 className="period-select"
                             >
@@ -506,11 +1440,17 @@ function AdminReports() {
 
 
                             <button
+                                type="button"
                                 className="export-report-button"
-                                onClick={handleExport}
+                                onClick={
+                                    handleExport
+                                }
                             >
+
                                 <i className="fa-solid fa-download"></i>
+
                                 Export Report
+
                             </button>
 
                         </div>
@@ -519,10 +1459,86 @@ function AdminReports() {
 
 
                     {/* =================================================
+                        LOADING
+                    ================================================= */}
+
+                    {loading && (
+
+                        <div
+                            style={{
+                                padding:
+                                    "16px 20px",
+                                marginBottom:
+                                    "20px",
+                                borderRadius:
+                                    "12px",
+                                background:
+                                    "#eef7fa",
+                                color:
+                                    "#2589A5"
+                            }}
+                        >
+
+                            Loading live report data...
+
+                        </div>
+
+                    )}
+
+
+                    {/* =================================================
+                        ERROR
+                    ================================================= */}
+
+                    {error && (
+
+                        <div
+                            style={{
+                                padding:
+                                    "16px 20px",
+                                marginBottom:
+                                    "20px",
+                                borderRadius:
+                                    "12px",
+                                background:
+                                    "#fdf0f0",
+                                color:
+                                    "#b45353",
+                                border:
+                                    "1px solid #efcccc"
+                            }}
+                        >
+
+                            {error}
+
+                            <button
+                                type="button"
+                                onClick={
+                                    loadReports
+                                }
+                                style={{
+                                    marginLeft:
+                                        "12px",
+                                    cursor:
+                                        "pointer"
+                                }}
+                            >
+
+                                Retry
+
+                            </button>
+
+                        </div>
+
+                    )}
+
+
+                    {/* =================================================
                         KPI CARDS
                     ================================================= */}
 
                     <section className="report-kpi-grid">
+
 
                         {/* REVENUE */}
 
@@ -531,29 +1547,45 @@ function AdminReports() {
                             <div className="kpi-card-top">
 
                                 <div className="kpi-icon">
+
                                     <i className="fa-solid fa-indian-rupee-sign"></i>
+
                                 </div>
 
-                                <span className="kpi-growth positive">
-                                    +10.8%
+
+                                <span
+                                    className={`kpi-growth ${growthClass(
+                                        revenueGrowth
+                                    )}`}
+                                >
+
+                                    {growthText(
+                                        revenueGrowth
+                                    )}
+
                                 </span>
 
                             </div>
+
 
                             <span className="kpi-label">
                                 Total Revenue
                             </span>
 
+
                             <h2>
-                                ₹
-                                {reportStats.totalRevenue.toLocaleString(
-                                    "en-IN"
+                                {formatAmount(
+                                    periodStats.totalRevenue
                                 )}
                             </h2>
 
+
                             <p>
+
                                 <i className="fa-solid fa-arrow-trend-up"></i>
-                                Revenue generated this year
+
+                                {periodLabel}
+
                             </p>
 
                         </div>
@@ -566,28 +1598,47 @@ function AdminReports() {
                             <div className="kpi-card-top">
 
                                 <div className="kpi-icon">
+
                                     <i className="fa-solid fa-calendar-check"></i>
+
                                 </div>
 
-                                <span className="kpi-growth positive">
-                                    +15.4%
+
+                                <span
+                                    className={`kpi-growth ${growthClass(
+                                        reservationGrowth
+                                    )}`}
+                                >
+
+                                    {growthText(
+                                        reservationGrowth
+                                    )}
+
                                 </span>
 
                             </div>
+
 
                             <span className="kpi-label">
                                 Total Reservations
                             </span>
 
+
                             <h2>
-                                {reportStats.totalReservations.toLocaleString(
+                                {Number(
+                                    periodStats.totalReservations
+                                ).toLocaleString(
                                     "en-IN"
                                 )}
                             </h2>
 
+
                             <p>
+
                                 <i className="fa-solid fa-arrow-trend-up"></i>
-                                Bookings completed this year
+
+                                {periodLabel}
+
                             </p>
 
                         </div>
@@ -600,26 +1651,45 @@ function AdminReports() {
                             <div className="kpi-card-top">
 
                                 <div className="kpi-icon">
+
                                     <i className="fa-solid fa-user-plus"></i>
+
                                 </div>
 
-                                <span className="kpi-growth positive">
-                                    +12.5%
+
+                                <span
+                                    className={`kpi-growth ${growthClass(
+                                        memberGrowth
+                                    )}`}
+                                >
+
+                                    {growthText(
+                                        memberGrowth
+                                    )}
+
                                 </span>
 
                             </div>
+
 
                             <span className="kpi-label">
                                 New Members
                             </span>
 
+
                             <h2>
-                                {reportStats.totalNewMembers}
+                                {
+                                    periodStats.totalMembers
+                                }
                             </h2>
 
+
                             <p>
+
                                 <i className="fa-solid fa-arrow-trend-up"></i>
-                                New registrations this year
+
+                                {periodLabel}
+
                             </p>
 
                         </div>
@@ -632,26 +1702,32 @@ function AdminReports() {
                             <div className="kpi-card-top">
 
                                 <div className="kpi-icon">
+
                                     <i className="fa-solid fa-chair"></i>
+
                                 </div>
 
-                                <span className="kpi-growth positive">
-                                    +6.2%
-                                </span>
-
                             </div>
+
 
                             <span className="kpi-label">
                                 Average Occupancy
                             </span>
 
+
                             <h2>
-                                {reportStats.occupancy}%
+                                {
+                                    periodStats.averageOccupancy
+                                }%
                             </h2>
 
+
                             <p>
+
                                 <i className="fa-solid fa-arrow-trend-up"></i>
-                                Average seat utilization
+
+                                Seat utilization
+
                             </p>
 
                         </div>
@@ -664,6 +1740,7 @@ function AdminReports() {
                     ================================================= */}
 
                     <section className="reports-chart-grid">
+
 
                         {/* REVENUE CHART */}
 
@@ -678,19 +1755,24 @@ function AdminReports() {
                                     </h2>
 
                                     <p>
-                                        Monthly revenue performance
+                                        Monthly successful payment revenue
                                     </p>
 
                                 </div>
 
+
                                 <div className="panel-total">
 
                                     <strong>
-                                        ₹1,48,760
+                                        {
+                                            formatAmount(
+                                                currentMonthData.revenue
+                                            )
+                                        }
                                     </strong>
 
                                     <span>
-                                        September
+                                        Current Month
                                     </span>
 
                                 </div>
@@ -700,19 +1782,62 @@ function AdminReports() {
 
                             <div className="chart-container">
 
+
                                 <div className="chart-y-axis">
 
-                                    <span>₹1.5L</span>
-                                    <span>₹1.2L</span>
-                                    <span>₹90K</span>
-                                    <span>₹60K</span>
-                                    <span>₹30K</span>
-                                    <span>₹0</span>
+                                    <span>
+                                        {
+                                            formatAmount(
+                                                maxRevenue
+                                            )
+                                        }
+                                    </span>
+
+                                    <span>
+                                        {
+                                            formatAmount(
+                                                maxRevenue *
+                                                0.8
+                                            )
+                                        }
+                                    </span>
+
+                                    <span>
+                                        {
+                                            formatAmount(
+                                                maxRevenue *
+                                                0.6
+                                            )
+                                        }
+                                    </span>
+
+                                    <span>
+                                        {
+                                            formatAmount(
+                                                maxRevenue *
+                                                0.4
+                                            )
+                                        }
+                                    </span>
+
+                                    <span>
+                                        {
+                                            formatAmount(
+                                                maxRevenue *
+                                                0.2
+                                            )
+                                    }
+                                    </span>
+
+                                    <span>
+                                        ₹0
+                                    </span>
 
                                 </div>
 
 
                                 <div className="bar-chart">
+
 
                                     <div className="chart-grid-lines">
 
@@ -728,56 +1853,68 @@ function AdminReports() {
 
                                     <div className="bars-wrapper">
 
-                                        {monthlyData.map((item) => {
+                                        {monthlyData.map(
+                                            (
+                                                item
+                                            ) => {
 
-                                            const height =
-                                                (item.revenue /
-                                                    maxRevenue) *
-                                                100;
+                                                const height =
+                                                    (
+                                                        Number(
+                                                            item.revenue ||
+                                                            0
+                                                        ) /
+                                                        maxRevenue
+                                                    ) *
+                                                    100;
 
-                                            return (
 
-                                                <div
-                                                    className="bar-column"
-                                                    key={item.month}
-                                                >
+                                                return (
 
-                                                    <div className="bar-value">
+                                                    <div
+                                                        className="bar-column"
+                                                        key={`${item.year}-${item.month}`}
+                                                    >
 
-                                                        ₹
-                                                        {(
-                                                            item.revenue /
-                                                            1000
-                                                        ).toFixed(0)}
-                                                        K
+                                                        <div className="bar-value">
+
+                                                            {formatAmount(
+                                                                item.revenue
+                                                            )}
+
+                                                        </div>
+
+
+                                                        <div className="bar-area">
+
+                                                            <div
+                                                                className="revenue-bar"
+                                                                style={{
+                                                                    height:
+                                                                        `${height}%`
+                                                                }}
+                                                                title={`${item.monthName || item.month}: ${formatAmount(
+                                                                    item.revenue
+                                                                )}`}
+                                                            ></div>
+
+                                                        </div>
+
+
+                                                        <span className="bar-label">
+
+                                                            {
+                                                                item.month
+                                                            }
+
+                                                        </span>
 
                                                     </div>
 
+                                                );
 
-                                                    <div className="bar-area">
-
-                                                        <div
-                                                            className="revenue-bar"
-                                                            style={{
-                                                                height: `${height}%`,
-                                                            }}
-                                                            title={`${item.month}: ₹${item.revenue.toLocaleString(
-                                                                "en-IN"
-                                                            )}`}
-                                                        ></div>
-
-                                                    </div>
-
-
-                                                    <span className="bar-label">
-                                                        {item.month}
-                                                    </span>
-
-                                                </div>
-
-                                            );
-
-                                        })}
+                                            }
+                                        )}
 
                                     </div>
 
@@ -801,7 +1938,7 @@ function AdminReports() {
                                     </h2>
 
                                     <p>
-                                        Key library metrics
+                                        Current live library metrics
                                     </p>
 
                                 </div>
@@ -811,13 +1948,17 @@ function AdminReports() {
 
                             <div className="performance-list">
 
-                                {/* Reservations */}
+
+                                {/* RESERVATIONS */}
 
                                 <div className="performance-item">
 
                                     <div className="performance-icon blue">
+
                                         <i className="fa-solid fa-calendar-check"></i>
+
                                     </div>
+
 
                                     <div className="performance-content">
 
@@ -828,7 +1969,9 @@ function AdminReports() {
                                             </strong>
 
                                             <span>
-                                                748
+                                                {
+                                                    currentMonthData.reservations
+                                                }
                                             </span>
 
                                         </div>
@@ -839,14 +1982,29 @@ function AdminReports() {
                                             <div
                                                 className="progress-fill"
                                                 style={{
-                                                    width: "82%",
+                                                    width:
+                                                        `${
+                                                            maxReservations > 0
+                                                                ? Math.min(
+                                                                    100,
+                                                                    Math.round(
+                                                                        (
+                                                                            currentMonthData.reservations /
+                                                                            maxReservations
+                                                                        ) *
+                                                                        100
+                                                                    )
+                                                                )
+                                                                : 0
+                                                        }%`
                                                 }}
                                             ></div>
 
                                         </div>
 
+
                                         <small>
-                                            82% of monthly target
+                                            Relative to highest recorded month
                                         </small>
 
                                     </div>
@@ -854,13 +2012,16 @@ function AdminReports() {
                                 </div>
 
 
-                                {/* Members */}
+                                {/* MEMBERS */}
 
                                 <div className="performance-item">
 
                                     <div className="performance-icon purple">
+
                                         <i className="fa-solid fa-users"></i>
+
                                     </div>
+
 
                                     <div className="performance-content">
 
@@ -871,7 +2032,12 @@ function AdminReports() {
                                             </strong>
 
                                             <span>
-                                                462
+                                                {
+                                                    reportData
+                                                        ?.statistics
+                                                        ?.activeMembers ??
+                                                    0
+                                                }
                                             </span>
 
                                         </div>
@@ -882,14 +2048,28 @@ function AdminReports() {
                                             <div
                                                 className="progress-fill purple-fill"
                                                 style={{
-                                                    width: "88%",
+                                                    width:
+                                                        `${
+                                                            reportData
+                                                                ?.statistics
+                                                                ?.activeMembers &&
+                                                            reportData
+                                                                ?.statistics
+                                                                ?.totalNewMembers !==
+                                                                undefined
+
+                                                                ? "100%"
+
+                                                                : "0%"
+                                                        }`
                                                 }}
                                             ></div>
 
                                         </div>
 
+
                                         <small>
-                                            88% of member capacity
+                                            Active members in the system
                                         </small>
 
                                     </div>
@@ -897,13 +2077,16 @@ function AdminReports() {
                                 </div>
 
 
-                                {/* Occupancy */}
+                                {/* OCCUPANCY */}
 
                                 <div className="performance-item">
 
                                     <div className="performance-icon orange">
+
                                         <i className="fa-solid fa-chair"></i>
+
                                     </div>
+
 
                                     <div className="performance-content">
 
@@ -914,7 +2097,9 @@ function AdminReports() {
                                             </strong>
 
                                             <span>
-                                                58%
+                                                {
+                                                    seatOverview.occupancy
+                                                }%
                                             </span>
 
                                         </div>
@@ -925,14 +2110,20 @@ function AdminReports() {
                                             <div
                                                 className="progress-fill orange-fill"
                                                 style={{
-                                                    width: "58%",
+                                                    width:
+                                                        `${seatOverview.occupancy}%`
                                                 }}
                                             ></div>
 
                                         </div>
 
+
                                         <small>
-                                            58 of 100 seats currently utilized
+                                            {
+                                                seatOverview.used
+                                            } of {
+                                                seatOverview.total
+                                            } seats utilized
                                         </small>
 
                                     </div>
@@ -940,13 +2131,16 @@ function AdminReports() {
                                 </div>
 
 
-                                {/* Revenue */}
+                                {/* REVENUE */}
 
                                 <div className="performance-item">
 
                                     <div className="performance-icon green">
+
                                         <i className="fa-solid fa-indian-rupee-sign"></i>
+
                                     </div>
+
 
                                     <div className="performance-content">
 
@@ -957,7 +2151,11 @@ function AdminReports() {
                                             </strong>
 
                                             <span>
-                                                ₹1,48,760
+                                                {
+                                                    formatAmount(
+                                                        currentMonthData.revenue
+                                                    )
+                                                }
                                             </span>
 
                                         </div>
@@ -968,14 +2166,26 @@ function AdminReports() {
                                             <div
                                                 className="progress-fill green-fill"
                                                 style={{
-                                                    width: "91%",
+                                                    width:
+                                                        `${
+                                                            maxRevenue > 0
+                                                                ? Math.round(
+                                                                    (
+                                                                        currentMonthData.revenue /
+                                                                        maxRevenue
+                                                                    ) *
+                                                                    100
+                                                                )
+                                                                : 0
+                                                        }%`
                                                 }}
                                             ></div>
 
                                         </div>
 
+
                                         <small>
-                                            91% of monthly revenue target
+                                            Relative to highest recorded month
                                         </small>
 
                                     </div>
@@ -1004,8 +2214,8 @@ function AdminReports() {
                                 </h2>
 
                                 <p>
-                                    Compare reservations and new member
-                                    registrations.
+                                    Compare monthly revenue,
+                                    reservations and new members.
                                 </p>
 
                             </div>
@@ -1013,45 +2223,64 @@ function AdminReports() {
 
                             <div className="chart-toggle">
 
+
                                 <button
+                                    type="button"
                                     className={
-                                        activeChart === "revenue"
+                                        activeChart ===
+                                        "revenue"
                                             ? "active"
                                             : ""
                                     }
                                     onClick={() =>
-                                        setActiveChart("revenue")
+                                        setActiveChart(
+                                            "revenue"
+                                        )
                                     }
                                 >
+
                                     Revenue
+
                                 </button>
 
 
                                 <button
+                                    type="button"
                                     className={
-                                        activeChart === "reservations"
+                                        activeChart ===
+                                        "reservations"
                                             ? "active"
                                             : ""
                                     }
                                     onClick={() =>
-                                        setActiveChart("reservations")
+                                        setActiveChart(
+                                            "reservations"
+                                        )
                                     }
                                 >
+
                                     Reservations
+
                                 </button>
 
 
                                 <button
+                                    type="button"
                                     className={
-                                        activeChart === "members"
+                                        activeChart ===
+                                        "members"
                                             ? "active"
                                             : ""
                                     }
                                     onClick={() =>
-                                        setActiveChart("members")
+                                        setActiveChart(
+                                            "members"
+                                        )
                                     }
                                 >
+
                                     Members
+
                                 </button>
 
                             </div>
@@ -1061,47 +2290,131 @@ function AdminReports() {
 
                         <div className="trend-chart">
 
+
                             <div className="trend-y-axis">
 
                                 <span>
-                                    {activeChart === "members"
-                                        ? "60"
-                                        : activeChart === "reservations"
-                                            ? "800"
-                                            : "₹1.5L"}
+
+                                    {activeChart ===
+                                    "revenue"
+
+                                        ? formatAmount(
+                                            maxRevenue
+                                        )
+
+                                        : activeChart ===
+                                            "reservations"
+
+                                            ? maxReservations
+
+                                            : maxMembers}
+
                                 </span>
 
-                                <span>
-                                    {activeChart === "members"
-                                        ? "48"
-                                        : activeChart === "reservations"
-                                            ? "640"
-                                            : "₹1.2L"}
-                                </span>
 
                                 <span>
-                                    {activeChart === "members"
-                                        ? "36"
-                                        : activeChart === "reservations"
-                                            ? "480"
-                                            : "₹90K"}
+
+                                    {activeChart ===
+                                    "revenue"
+
+                                        ? formatAmount(
+                                            maxRevenue *
+                                            0.8
+                                        )
+
+                                        : activeChart ===
+                                            "reservations"
+
+                                            ? Math.round(
+                                                maxReservations *
+                                                0.8
+                                            )
+
+                                            : Math.round(
+                                                maxMembers *
+                                                0.8
+                                            )}
+
                                 </span>
 
-                                <span>
-                                    {activeChart === "members"
-                                        ? "24"
-                                        : activeChart === "reservations"
-                                            ? "320"
-                                            : "₹60K"}
-                                </span>
 
                                 <span>
-                                    {activeChart === "members"
-                                        ? "12"
-                                        : activeChart === "reservations"
-                                            ? "160"
-                                            : "₹30K"}
+
+                                    {activeChart ===
+                                    "revenue"
+
+                                        ? formatAmount(
+                                            maxRevenue *
+                                            0.6
+                                        )
+
+                                        : activeChart ===
+                                            "reservations"
+
+                                            ? Math.round(
+                                                maxReservations *
+                                                0.6
+                                            )
+
+                                            : Math.round(
+                                                maxMembers *
+                                                0.6
+                                            )}
+
                                 </span>
+
+
+                                <span>
+
+                                    {activeChart ===
+                                    "revenue"
+
+                                        ? formatAmount(
+                                            maxRevenue *
+                                            0.4
+                                        )
+
+                                        : activeChart ===
+                                            "reservations"
+
+                                            ? Math.round(
+                                                maxReservations *
+                                                0.4
+                                            )
+
+                                            : Math.round(
+                                                maxMembers *
+                                                0.4
+                                            )}
+
+                                </span>
+
+
+                                <span>
+
+                                    {activeChart ===
+                                    "revenue"
+
+                                        ? formatAmount(
+                                            maxRevenue *
+                                            0.2
+                                        )
+
+                                        : activeChart ===
+                                            "reservations"
+
+                                            ? Math.round(
+                                                maxReservations *
+                                                0.2
+                                            )
+
+                                            : Math.round(
+                                                maxMembers *
+                                                0.2
+                                            )}
+
+                                </span>
+
 
                                 <span>
                                     0
@@ -1111,6 +2424,7 @@ function AdminReports() {
 
 
                             <div className="trend-chart-area">
+
 
                                 <div className="trend-grid-lines">
 
@@ -1126,77 +2440,118 @@ function AdminReports() {
 
                                 <div className="trend-bars">
 
-                                    {monthlyData.map((item) => {
+                                    {monthlyData.map(
+                                        (
+                                            item
+                                        ) => {
 
-                                        let value;
-                                        let maxValue;
+                                            let value =
+                                                0;
 
-                                        if (
-                                            activeChart ===
-                                            "reservations"
-                                        ) {
+                                            let maxValue =
+                                                1;
 
-                                            value = item.reservations;
-                                            maxValue = maxReservations;
 
-                                        } else if (
-                                            activeChart ===
-                                            "members"
-                                        ) {
+                                            if (
+                                                activeChart ===
+                                                "reservations"
+                                            ) {
 
-                                            value = item.members;
-                                            maxValue = maxMembers;
+                                                value =
+                                                    Number(
+                                                        item.reservations ||
+                                                        0
+                                                    );
 
-                                        } else {
+                                                maxValue =
+                                                    maxReservations;
 
-                                            value = item.revenue;
-                                            maxValue = maxRevenue;
+                                            }
+
+                                            else if (
+                                                activeChart ===
+                                                "members"
+                                            ) {
+
+                                                value =
+                                                    Number(
+                                                        item.members ||
+                                                        0
+                                                    );
+
+                                                maxValue =
+                                                    maxMembers;
+
+                                            }
+
+                                            else {
+
+                                                value =
+                                                    Number(
+                                                        item.revenue ||
+                                                        0
+                                                    );
+
+                                                maxValue =
+                                                    maxRevenue;
+
+                                            }
+
+
+                                            const height =
+                                                (
+                                                    value /
+                                                    maxValue
+                                                ) *
+                                                100;
+
+
+                                            return (
+
+                                                <div
+                                                    className="trend-column"
+                                                    key={`${item.year}-${item.month}-trend`}
+                                                >
+
+                                                    <div className="trend-value">
+
+                                                        {activeChart ===
+                                                        "revenue"
+
+                                                            ? formatAmount(
+                                                                value
+                                                            )
+
+                                                            : value}
+
+                                                    </div>
+
+
+                                                    <div className="trend-bar-wrapper">
+
+                                                        <div
+                                                            className="trend-bar"
+                                                            style={{
+                                                                height:
+                                                                    `${height}%`
+                                                            }}
+                                                        ></div>
+
+                                                    </div>
+
+
+                                                    <span>
+                                                        {
+                                                            item.month
+                                                        }
+                                                    </span>
+
+                                                </div>
+
+                                            );
 
                                         }
-
-                                        const height =
-                                            (value / maxValue) * 100;
-
-                                        return (
-
-                                            <div
-                                                className="trend-column"
-                                                key={item.month}
-                                            >
-
-                                                <div className="trend-value">
-
-                                                    {activeChart ===
-                                                    "revenue"
-                                                        ? `₹${(
-                                                            value / 1000
-                                                        ).toFixed(0)}K`
-                                                        : value}
-
-                                                </div>
-
-
-                                                <div className="trend-bar-wrapper">
-
-                                                    <div
-                                                        className="trend-bar"
-                                                        style={{
-                                                            height: `${height}%`,
-                                                        }}
-                                                    ></div>
-
-                                                </div>
-
-
-                                                <span>
-                                                    {item.month}
-                                                </span>
-
-                                            </div>
-
-                                        );
-
-                                    })}
+                                    )}
 
                                 </div>
 
@@ -1212,6 +2567,7 @@ function AdminReports() {
                     ================================================= */}
 
                     <section className="reports-lower-grid">
+
 
                         {/* MEMBERSHIP DISTRIBUTION */}
 
@@ -1236,12 +2592,20 @@ function AdminReports() {
 
                             <div className="membership-chart-content">
 
-                                <div className="donut-chart">
+
+                                <div
+                                    className="donut-chart"
+                                    style={
+                                        donutStyle
+                                    }
+                                >
 
                                     <div className="donut-inner">
 
                                         <strong>
-                                            462
+                                            {
+                                                membershipOverview.active
+                                            }
                                         </strong>
 
                                         <span>
@@ -1255,33 +2619,79 @@ function AdminReports() {
 
                                 <div className="membership-legend">
 
-                                    {membershipPlans.map(
-                                        (plan, index) => (
+                                    {membershipPlans.length >
+                                    0 ? (
 
-                                            <div
-                                                className="legend-item"
-                                                key={plan.name}
-                                            >
+                                        membershipPlans.map(
+                                            (
+                                                plan,
+                                                index
+                                            ) => (
 
-                                                <div className="legend-info">
+                                                <div
+                                                    className="legend-item"
+                                                    key={
+                                                        plan.name
+                                                    }
+                                                >
 
-                                                    <span
-                                                        className={`legend-dot dot-${index}`}
-                                                    ></span>
+                                                    <div className="legend-info">
 
-                                                    <span>
-                                                        {plan.name}
-                                                    </span>
+                                                        <span
+                                                            className={`legend-dot dot-${index}`}
+                                                        ></span>
+
+                                                        <span>
+                                                            {
+                                                                plan.name
+                                                            }
+                                                        </span>
+
+                                                    </div>
+
+
+                                                    <strong>
+
+                                                        {
+                                                            plan.count
+                                                        }
+
+                                                        {" "}
+
+                                                        <small>
+                                                            (
+                                                            {
+                                                                plan.percentage
+                                                            }%
+                                                            )
+                                                        </small>
+
+                                                    </strong>
 
                                                 </div>
 
-                                                <strong>
-                                                    {plan.count}
-                                                </strong>
+                                            )
+
+                                        )
+
+                                    ) : (
+
+                                        <div className="legend-item">
+
+                                            <div className="legend-info">
+
+                                                <span>
+                                                    No active memberships
+                                                </span>
 
                                             </div>
 
-                                        )
+                                            <strong>
+                                                0
+                                            </strong>
+
+                                        </div>
+
                                     )}
 
                                 </div>
@@ -1323,12 +2733,88 @@ function AdminReports() {
 
                             <div className="seat-usage-list">
 
-                                {seatUsage.map((section) => (
+                                {seatUsage.length >
+                                0 ? (
 
-                                    <div
-                                        className="seat-usage-item"
-                                        key={section.name}
-                                    >
+                                    seatUsage.map(
+                                        (
+                                            section
+                                        ) => (
+
+                                            <div
+                                                className="seat-usage-item"
+                                                key={
+                                                    section.name
+                                                }
+                                            >
+
+                                                <div className="seat-usage-top">
+
+                                                    <div className="seat-name">
+
+                                                        <div className="seat-icon">
+
+                                                            <i
+                                                                className={`fa-solid ${section.icon || "fa-chair"}`}
+                                                            ></i>
+
+                                                        </div>
+
+
+                                                        <div>
+
+                                                            <strong>
+                                                                {
+                                                                    section.name
+                                                                }
+                                                            </strong>
+
+                                                            <span>
+                                                                {
+                                                                    section.seats
+                                                                }{" "}
+                                                                of{" "}
+                                                                {
+                                                                    section.total
+                                                                } seats
+                                                            </span>
+
+                                                        </div>
+
+                                                    </div>
+
+
+                                                    <strong className="seat-percentage">
+
+                                                        {
+                                                            section.percentage
+                                                        }%
+
+                                                    </strong>
+
+                                                </div>
+
+
+                                                <div className="seat-progress">
+
+                                                    <div
+                                                        style={{
+                                                            width:
+                                                                `${section.percentage}%`
+                                                        }}
+                                                    ></div>
+
+                                                </div>
+
+                                            </div>
+
+                                        )
+
+                                    )
+
+                                ) : (
+
+                                    <div className="seat-usage-item">
 
                                         <div className="seat-usage-top">
 
@@ -1336,9 +2822,7 @@ function AdminReports() {
 
                                                 <div className="seat-icon">
 
-                                                    <i
-                                                        className={`fa-solid ${section.icon}`}
-                                                    ></i>
+                                                    <i className="fa-solid fa-chair"></i>
 
                                                 </div>
 
@@ -1346,21 +2830,19 @@ function AdminReports() {
                                                 <div>
 
                                                     <strong>
-                                                        {section.name}
+                                                        No seat data
                                                     </strong>
 
                                                     <span>
-                                                        {section.seats} of{" "}
-                                                        {section.total} seats
+                                                        Seat information unavailable
                                                     </span>
 
                                                 </div>
 
                                             </div>
 
-
                                             <strong className="seat-percentage">
-                                                {section.percentage}%
+                                                0%
                                             </strong>
 
                                         </div>
@@ -1370,7 +2852,8 @@ function AdminReports() {
 
                                             <div
                                                 style={{
-                                                    width: `${section.percentage}%`,
+                                                    width:
+                                                        "0%"
                                                 }}
                                             ></div>
 
@@ -1378,7 +2861,7 @@ function AdminReports() {
 
                                     </div>
 
-                                ))}
+                                )}
 
                             </div>
 
@@ -1413,12 +2896,15 @@ function AdminReports() {
 
                             <div className="payment-overview-content">
 
+
                                 <div className="payment-circle">
 
                                     <div>
 
                                         <strong>
-                                            295
+                                            {
+                                                paymentOverview.totalTransactions
+                                            }
                                         </strong>
 
                                         <span>
@@ -1432,9 +2918,11 @@ function AdminReports() {
 
                                 <div className="payment-status-list">
 
+
                                     <div className="payment-status-item">
 
                                         <span className="status-dot successful"></span>
+
 
                                         <div>
 
@@ -1443,13 +2931,21 @@ function AdminReports() {
                                             </strong>
 
                                             <small>
-                                                284 transactions
+                                                {
+                                                    paymentOverview.successful
+                                                }{" "}
+                                                transactions
                                             </small>
 
                                         </div>
 
+
                                         <b>
-                                            96.3%
+
+                                            {
+                                                paymentOverview.successRate
+                                            }%
+
                                         </b>
 
                                     </div>
@@ -1459,6 +2955,7 @@ function AdminReports() {
 
                                         <span className="status-dot pending"></span>
 
+
                                         <div>
 
                                             <strong>
@@ -1466,13 +2963,34 @@ function AdminReports() {
                                             </strong>
 
                                             <small>
-                                                8 transactions
+                                                {
+                                                    paymentOverview.pending
+                                                }{" "}
+                                                transactions
                                             </small>
 
                                         </div>
 
+
                                         <b>
-                                            2.7%
+
+                                            {
+                                                paymentOverview.totalTransactions >
+                                                0
+                                                    ? Number(
+                                                        (
+                                                            (
+                                                                paymentOverview.pending /
+                                                                paymentOverview.totalTransactions
+                                                            ) *
+                                                            100
+                                                        ).toFixed(
+                                                            1
+                                                        )
+                                                    )
+                                                    : 0
+                                            }%
+
                                         </b>
 
                                     </div>
@@ -1482,6 +3000,7 @@ function AdminReports() {
 
                                         <span className="status-dot failed"></span>
 
+
                                         <div>
 
                                             <strong>
@@ -1489,13 +3008,34 @@ function AdminReports() {
                                             </strong>
 
                                             <small>
-                                                3 transactions
+                                                {
+                                                    paymentOverview.failed
+                                                }{" "}
+                                                transactions
                                             </small>
 
                                         </div>
 
+
                                         <b>
-                                            1.0%
+
+                                            {
+                                                paymentOverview.totalTransactions >
+                                                0
+                                                    ? Number(
+                                                        (
+                                                            (
+                                                                paymentOverview.failed /
+                                                                paymentOverview.totalTransactions
+                                                            ) *
+                                                            100
+                                                        ).toFixed(
+                                                            1
+                                                        )
+                                                    )
+                                                    : 0
+                                            }%
+
                                         </b>
 
                                     </div>
@@ -1520,7 +3060,7 @@ function AdminReports() {
                                     </h2>
 
                                     <p>
-                                        Important observations
+                                        Generated from current database data
                                     </p>
 
                                 </div>
@@ -1530,65 +3070,114 @@ function AdminReports() {
 
                             <div className="insights-list">
 
+
+                                {/* REVENUE INSIGHT */}
+
                                 <div className="insight-item">
 
                                     <div className="insight-icon success">
+
                                         <i className="fa-solid fa-arrow-trend-up"></i>
+
                                     </div>
+
 
                                     <div>
 
                                         <strong>
-                                            Revenue is growing
+                                            Revenue activity
                                         </strong>
 
                                         <p>
-                                            September revenue increased by
-                                            3.4% compared with August.
+
+                                            {revenueGrowth >=
+                                            0
+
+                                                ? `Current month revenue is ${formatAmount(
+                                                    currentMonthData.revenue
+                                                )}, up ${Math.abs(
+                                                    revenueGrowth
+                                                )}% from the previous month.`
+
+                                                : `Current month revenue is ${formatAmount(
+                                                    currentMonthData.revenue
+                                                )}, down ${Math.abs(
+                                                    revenueGrowth
+                                                )}% from the previous month.`}
+
                                         </p>
 
                                     </div>
 
                                 </div>
 
+
+                                {/* MEMBERSHIP INSIGHT */}
 
                                 <div className="insight-item">
 
                                     <div className="insight-icon info">
+
                                         <i className="fa-solid fa-users"></i>
+
                                     </div>
+
 
                                     <div>
 
                                         <strong>
-                                            Membership remains strong
+                                            Membership distribution
                                         </strong>
 
                                         <p>
-                                            Premium Reader accounts make up
-                                            67.5% of active memberships.
+
+                                            {reportData
+                                                ?.insights
+                                                ?.premiumPercentage
+                                                !==
+                                                undefined
+
+                                                ? `Premium Reader accounts represent ${reportData.insights.premiumPercentage}% of active memberships.`
+
+                                                : "Active membership distribution is currently unavailable."}
+
                                         </p>
 
                                     </div>
 
                                 </div>
 
+
+                                {/* SEAT INSIGHT */}
 
                                 <div className="insight-item">
 
                                     <div className="insight-icon warning">
+
                                         <i className="fa-solid fa-chair"></i>
+
                                     </div>
+
 
                                     <div>
 
                                         <strong>
-                                            Monitor seat usage
+                                            Seat utilization
                                         </strong>
 
                                         <p>
-                                            Reading Hall has the highest
-                                            utilization at 78%.
+
+                                            {reportData
+                                                ?.insights
+                                                ?.highestOccupancySection &&
+                                            reportData
+                                                ?.insights
+                                                ?.highestOccupancy
+
+                                                ? `${reportData.insights.highestOccupancySection} has the highest current utilization at ${reportData.insights.highestOccupancy}%.`
+
+                                                : "Seat utilization data is currently unavailable."}
+
                                         </p>
 
                                     </div>
@@ -1596,11 +3185,16 @@ function AdminReports() {
                                 </div>
 
 
+                                {/* PAYMENT INSIGHT */}
+
                                 <div className="insight-item">
 
                                     <div className="insight-icon purple">
+
                                         <i className="fa-solid fa-credit-card"></i>
+
                                     </div>
+
 
                                     <div>
 
@@ -1609,8 +3203,11 @@ function AdminReports() {
                                         </strong>
 
                                         <p>
-                                            96.3% of payment transactions
-                                            were completed successfully.
+
+                                            {
+                                                paymentOverview.successRate
+                                            }% of recorded payments in the report period were successful.
+
                                         </p>
 
                                     </div>
@@ -1639,14 +3236,22 @@ function AdminReports() {
                                 </h2>
 
                                 <p>
-                                    Recent library performance overview
+                                    Recent recorded library performance
                                 </p>
 
                             </div>
 
 
                             <span className="report-period-label">
-                                2026
+
+                                {
+                                    reportData
+                                        ?.period
+                                        ?.year ||
+                                    new Date()
+                                        .getFullYear()
+                                }
+
                             </span>
 
                         </div>
@@ -1691,94 +3296,148 @@ function AdminReports() {
 
                                 <tbody>
 
-                                    {recentPerformance.map(
-                                        (item, index) => (
+                                    {[
+                                        ...monthlyData
+                                    ]
+                                        .reverse()
+                                        .slice(
+                                            0,
+                                            5
+                                        )
+                                        .map(
+                                            (
+                                                item,
+                                                index
+                                            ) => (
 
-                                            <tr key={item.month}>
-
-                                                <td>
-
-                                                    <div className="month-name">
-
-                                                        <span>
-                                                            {index + 1}
-                                                        </span>
-
-                                                        <strong>
-                                                            {item.month}
-                                                        </strong>
-
-                                                    </div>
-
-                                                </td>
+                                                <tr
+                                                    key={`${item.year}-${item.month}-table`}
+                                                >
 
 
-                                                <td>
+                                                    <td>
 
-                                                    <strong className="table-revenue">
-                                                        {item.revenue}
-                                                    </strong>
+                                                        <div className="month-name">
 
-                                                </td>
+                                                            <span>
+                                                                {
+                                                                    index +
+                                                                    1
+                                                                }
+                                                            </span>
 
-
-                                                <td>
-
-                                                    <span className="table-number">
-                                                        {item.reservations}
-                                                    </span>
-
-                                                </td>
-
-
-                                                <td>
-
-                                                    <span className="table-number">
-                                                        {item.members}
-                                                    </span>
-
-                                                </td>
-
-
-                                                <td>
-
-                                                    <div className="table-occupancy">
-
-                                                        <div className="mini-progress">
-
-                                                            <span
-                                                                style={{
-                                                                    width: item.occupancy,
-                                                                }}
-                                                            ></span>
+                                                            <strong>
+                                                                {
+                                                                    item.monthName ||
+                                                                    item.month
+                                                                }
+                                                                {" "}
+                                                                {
+                                                                    item.year ||
+                                                                    ""
+                                                                }
+                                                            </strong>
 
                                                         </div>
 
-                                                        <strong>
-                                                            {item.occupancy}
+                                                    </td>
+
+
+                                                    <td>
+
+                                                        <strong className="table-revenue">
+
+                                                            {
+                                                                formatAmount(
+                                                                    item.revenue
+                                                                )
+                                                            }
+
                                                         </strong>
 
-                                                    </div>
-
-                                                </td>
+                                                    </td>
 
 
-                                                <td>
+                                                    <td>
 
-                                                    <span className="performance-status">
+                                                        <span className="table-number">
 
-                                                        <span></span>
+                                                            {
+                                                                item.reservations
+                                                            }
 
-                                                        On Track
+                                                        </span>
 
-                                                    </span>
+                                                    </td>
 
-                                                </td>
 
-                                            </tr>
+                                                    <td>
 
-                                        )
-                                    )}
+                                                        <span className="table-number">
+
+                                                            {
+                                                                item.members
+                                                            }
+
+                                                        </span>
+
+                                                    </td>
+
+
+                                                    <td>
+
+                                                        <div className="table-occupancy">
+
+                                                            <div className="mini-progress">
+
+                                                                <span
+                                                                    style={{
+                                                                        width:
+                                                                            `${item.occupancy}%`
+                                                                    }}
+                                                                ></span>
+
+                                                            </div>
+
+
+                                                            <strong>
+
+                                                                {
+                                                                    item.occupancy
+                                                                }%
+
+                                                            </strong>
+
+                                                        </div>
+
+                                                    </td>
+
+
+                                                    <td>
+
+                                                        <span className="performance-status">
+
+                                                            <span></span>
+
+                                                            {
+
+                                                                index ===
+                                                                0
+
+                                                                    ? "Current"
+
+                                                                    : "Recorded"
+
+                                                            }
+
+                                                        </span>
+
+                                                    </td>
+
+                                                </tr>
+
+                                            )
+                                        )}
 
                                 </tbody>
 
@@ -1809,11 +3468,13 @@ function AdminReports() {
                             </strong>
 
                             <p>
-                                The analytics shown here are currently
-                                sample frontend data for the LibraSpace
-                                project. They will be connected to MongoDB
-                                and real payment, reservation and membership
-                                data during backend integration.
+                                Report figures are generated from the
+                                current LibraSpace MongoDB data. Revenue
+                                uses successful payments, reservation and
+                                member trends use their recorded dates,
+                                membership distribution uses active
+                                memberships, and seat occupancy uses the
+                                current seat status.
                             </p>
 
                         </div>
@@ -1832,6 +3493,7 @@ function AdminReports() {
                     <p>
                         © 2026 LibraSpace. Admin Dashboard.
                     </p>
+
 
                     <div>
 
@@ -1854,7 +3516,10 @@ function AdminReports() {
             </main>
 
         </div>
+
     );
+
 }
+
 
 export default AdminReports;

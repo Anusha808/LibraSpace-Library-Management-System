@@ -1,322 +1,803 @@
-import React, { useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, {
+    useEffect,
+    useMemo,
+    useState
+} from "react";
+
+import {
+    Link,
+    useLocation,
+    useNavigate
+} from "react-router-dom";
+
 import "./AdminPayments.css";
+
+
+/* =========================================================
+   API
+========================================================= */
+
+const API_BASE =
+    "http://localhost:5000/api/admin/payments";
+
+
+/* =========================================================
+   ADMIN PAYMENTS
+========================================================= */
 
 function AdminPayments() {
 
     const location = useLocation();
     const navigate = useNavigate();
 
+
+    /* =====================================================
+       STATES
+    ===================================================== */
+
+    const [payments, setPayments] =
+        useState([]);
+
+    const [searchTerm, setSearchTerm] =
+        useState("");
+
+    const [statusFilter, setStatusFilter] =
+        useState("All");
+
+    const [typeFilter, setTypeFilter] =
+        useState("All");
+
+    const [selectedPayment, setSelectedPayment] =
+        useState(null);
+
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
+
+
+    /* =====================================================
+       ADMIN INFORMATION
+    ===================================================== */
+
+    const storedAdmin = useMemo(() => {
+
+        try {
+
+            return JSON.parse(
+                localStorage.getItem(
+                    "adminUser"
+                )
+            );
+
+        } catch {
+
+            return null;
+
+        }
+
+    }, []);
+
+
+    const adminName =
+        storedAdmin?.name ||
+        "Administrator";
+
+
+    const adminEmail =
+        storedAdmin?.email ||
+        "admin@libraspace.com";
+
+
+    /* =====================================================
+       ACTIVE SIDEBAR
+    ===================================================== */
+
     const isActive = (path) => {
-        return location.pathname === path ? "active" : "";
+
+        return location.pathname === path
+            ? "active"
+            : "";
+
     };
 
-    const handleLogout = () => {
-        navigate("/admin/login");
-    };
 
-    const [payments, setPayments] = useState([
-        {
-            id: "PAY-001",
-            member: "Ananya Sharma",
-            studentId: "LIB2026001",
-            email: "ananya.sharma@gmail.com",
-            type: "Membership",
-            plan: "Premium Reader",
-            amount: 499,
-            method: "Razorpay",
-            date: "12 Sep 2026",
-            time: "10:32 AM",
-            status: "Successful",
-            transactionId: "pay_RZP001ANU",
-        },
-        {
-            id: "PAY-002",
-            member: "Rahul Kumar",
-            studentId: "LIB2026002",
-            email: "rahul.kumar@gmail.com",
-            type: "Membership",
-            plan: "Premium Reader",
-            amount: 499,
-            method: "Razorpay",
-            date: "12 Sep 2026",
-            time: "09:45 AM",
-            status: "Successful",
-            transactionId: "pay_RZP002RAH",
-        },
-        {
-            id: "PAY-003",
-            member: "Priya Nair",
-            studentId: "LIB2026003",
-            email: "priya.nair@gmail.com",
-            type: "Membership",
-            plan: "Basic Reader",
-            amount: 299,
-            method: "Razorpay",
-            date: "11 Sep 2026",
-            time: "04:20 PM",
-            status: "Successful",
-            transactionId: "pay_RZP003PRI",
-        },
-        {
-            id: "PAY-004",
-            member: "Arjun Menon",
-            studentId: "LIB2026004",
-            email: "arjun.menon@gmail.com",
-            type: "Membership",
-            plan: "Premium Reader",
-            amount: 499,
-            method: "Razorpay",
-            date: "10 Sep 2026",
-            time: "02:15 PM",
-            status: "Successful",
-            transactionId: "pay_RZP004ARJ",
-        },
-        {
-            id: "PAY-005",
-            member: "Sneha Reddy",
-            studentId: "LIB2026005",
-            email: "sneha.reddy@gmail.com",
-            type: "Membership",
-            plan: "Premium Reader",
-            amount: 499,
-            method: "Razorpay",
-            date: "10 Sep 2026",
-            time: "11:05 AM",
-            status: "Failed",
-            transactionId: "pay_RZP005SNE",
-        },
-        {
-            id: "PAY-006",
-            member: "Vikram Singh",
-            studentId: "LIB2026006",
-            email: "vikram.singh@gmail.com",
-            type: "Membership",
-            plan: "Basic Reader",
-            amount: 299,
-            method: "Razorpay",
-            date: "09 Sep 2026",
-            time: "05:40 PM",
-            status: "Pending",
-            transactionId: "pay_RZP006VIK",
-        },
-        {
-            id: "PAY-007",
-            member: "Meera Iyer",
-            studentId: "LIB2026007",
-            email: "meera.iyer@gmail.com",
-            type: "Membership",
-            plan: "Premium Reader",
-            amount: 499,
-            method: "Razorpay",
-            date: "08 Sep 2026",
-            time: "01:25 PM",
-            status: "Successful",
-            transactionId: "pay_RZP007MEE",
-        },
-        {
-            id: "PAY-008",
-            member: "Karan Patel",
-            studentId: "LIB2026008",
-            email: "karan.patel@gmail.com",
-            type: "Membership",
-            plan: "Basic Reader",
-            amount: 299,
-            method: "Razorpay",
-            date: "07 Sep 2026",
-            time: "10:50 AM",
-            status: "Successful",
-            transactionId: "pay_RZP008KAR",
-        },
-        {
-            id: "PAY-009",
-            member: "Divya Krishnan",
-            studentId: "LIB2026009",
-            email: "divya.krishnan@gmail.com",
-            type: "Membership",
-            plan: "Premium Reader",
-            amount: 499,
-            method: "Razorpay",
-            date: "06 Sep 2026",
-            time: "03:30 PM",
-            status: "Successful",
-            transactionId: "pay_RZP009DIV",
-        },
-        {
-            id: "PAY-010",
-            member: "Aditya Rao",
-            studentId: "LIB2026010",
-            email: "aditya.rao@gmail.com",
-            type: "Membership",
-            plan: "Premium Reader",
-            amount: 499,
-            method: "Razorpay",
-            date: "05 Sep 2026",
-            time: "12:10 PM",
-            status: "Pending",
-            transactionId: "pay_RZP010ADI",
-        },
-        {
-            id: "PAY-011",
-            member: "Nisha Kapoor",
-            studentId: "LIB2026011",
-            email: "nisha.kapoor@gmail.com",
-            type: "Membership",
-            plan: "Basic Reader",
-            amount: 299,
-            method: "Razorpay",
-            date: "04 Sep 2026",
-            time: "09:15 AM",
-            status: "Failed",
-            transactionId: "pay_RZP011NIS",
-        },
-        {
-            id: "PAY-012",
-            member: "Rohan Das",
-            studentId: "LIB2026012",
-            email: "rohan.das@gmail.com",
-            type: "Membership",
-            plan: "Premium Reader",
-            amount: 499,
-            method: "Razorpay",
-            date: "03 Sep 2026",
-            time: "04:45 PM",
-            status: "Successful",
-            transactionId: "pay_RZP012ROH",
-        },
-    ]);
+    /* =====================================================
+       AUTH HEADERS
+    ===================================================== */
 
-    const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("All");
-    const [typeFilter, setTypeFilter] = useState("All");
-    const [selectedPayment, setSelectedPayment] = useState(null);
+    const getHeaders = () => {
 
-    const statistics = useMemo(() => {
+        const token =
+            localStorage.getItem(
+                "adminToken"
+            );
 
-        const successfulPayments = payments.filter(
-            payment => payment.status === "Successful"
-        );
-
-        const pendingPayments = payments.filter(
-            payment => payment.status === "Pending"
-        );
-
-        const failedPayments = payments.filter(
-            payment => payment.status === "Failed"
-        );
-
-        const totalRevenue = successfulPayments.reduce(
-            (total, payment) => total + payment.amount,
-            0
-        );
-
-        const pendingAmount = pendingPayments.reduce(
-            (total, payment) => total + payment.amount,
-            0
-        );
 
         return {
-            totalRevenue,
-            successful: successfulPayments.length,
-            pending: pendingPayments.length,
-            failed: failedPayments.length,
-            pendingAmount,
+
+            "Content-Type":
+                "application/json",
+
+            ...(token
+                ? {
+                    Authorization:
+                        `Bearer ${token}`
+                }
+                : {})
+
         };
 
-    }, [payments]);
+    };
 
-    const filteredPayments = useMemo(() => {
 
-        return payments.filter(payment => {
+    /* =====================================================
+       LOGOUT
+    ===================================================== */
 
-            const search = searchTerm.toLowerCase();
+    const handleLogout = () => {
 
-            const matchesSearch =
-                payment.id.toLowerCase().includes(search) ||
-                payment.member.toLowerCase().includes(search) ||
-                payment.studentId.toLowerCase().includes(search) ||
-                payment.email.toLowerCase().includes(search) ||
-                payment.transactionId.toLowerCase().includes(search);
-
-            const matchesStatus =
-                statusFilter === "All" ||
-                payment.status === statusFilter;
-
-            const matchesType =
-                typeFilter === "All" ||
-                payment.type === typeFilter;
-
-            return matchesSearch && matchesStatus && matchesType;
-
-        });
-
-    }, [payments, searchTerm, statusFilter, typeFilter]);
-
-    const handleMarkSuccessful = (paymentId) => {
-
-        setPayments(prevPayments =>
-            prevPayments.map(payment =>
-                payment.id === paymentId
-                    ? {
-                        ...payment,
-                        status: "Successful",
-                    }
-                    : payment
-            )
+        localStorage.removeItem(
+            "adminToken"
         );
 
-        alert("Payment marked as successful.");
-    };
-
-    const handleMarkFailed = (paymentId) => {
-
-        setPayments(prevPayments =>
-            prevPayments.map(payment =>
-                payment.id === paymentId
-                    ? {
-                        ...payment,
-                        status: "Failed",
-                    }
-                    : payment
-            )
+        localStorage.removeItem(
+            "adminUser"
         );
 
-        alert("Payment marked as failed.");
+        localStorage.removeItem(
+            "token"
+        );
+
+        localStorage.removeItem(
+            "user"
+        );
+
+
+        navigate(
+            "/admin/login"
+        );
+
     };
 
-    const handleViewPayment = (payment) => {
-        setSelectedPayment(payment);
+
+    /* =====================================================
+       FORMAT DATE
+    ===================================================== */
+
+    const formatDate = (dateValue) => {
+
+        if (!dateValue) {
+
+            return "—";
+
+        }
+
+
+        const date =
+            new Date(dateValue);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return "—";
+
+        }
+
+
+        return date.toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+
     };
+
+
+    /* =====================================================
+       FORMAT TIME
+    ===================================================== */
+
+    const formatTime = (dateValue) => {
+
+        if (!dateValue) {
+
+            return "—";
+
+        }
+
+
+        const date =
+            new Date(dateValue);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return "—";
+
+        }
+
+
+        return date.toLocaleTimeString(
+            "en-IN",
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+
+    };
+
+
+    /* =====================================================
+       LOAD PAYMENTS
+    ===================================================== */
+
+    const loadPayments =
+        async () => {
+
+            try {
+
+                setLoading(true);
+
+                setError("");
+
+
+                const response =
+                    await fetch(
+                        API_BASE,
+                        {
+                            method: "GET",
+                            headers:
+                                getHeaders()
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Unable to load payments."
+                    );
+
+                }
+
+
+                const serverPayments =
+                    Array.isArray(
+                        data.payments
+                    )
+                        ? data.payments
+                        : [];
+
+
+                const formattedPayments =
+                    serverPayments.map(
+                        (
+                            payment,
+                            index
+                        ) => {
+
+                            const user =
+                                payment.user ||
+                                {};
+
+                            const membership =
+                                payment.membership ||
+                                {};
+
+
+                            const paymentId =
+                                `PAY-${String(
+                                    payment._id ||
+                                    index
+                                )
+                                    .slice(-6)
+                                    .toUpperCase()}`;
+
+
+                            const year =
+                                payment.paymentDate
+                                    ? new Date(
+                                        payment.paymentDate
+                                    ).getFullYear()
+                                    : new Date()
+                                        .getFullYear();
+
+
+                            const studentId =
+                                `LIB${year}${String(
+                                    user._id ||
+                                    payment._id ||
+                                    index
+                                )
+                                    .slice(-6)
+                                    .toUpperCase()}`;
+
+
+                            return {
+
+                                _id:
+                                    payment._id,
+
+                                id:
+                                    paymentId,
+
+                                member:
+                                    user.name ||
+                                    "Unknown Member",
+
+                                studentId,
+
+                                email:
+                                    user.email ||
+                                    "—",
+
+                                type:
+                                    "Membership",
+
+                                plan:
+                                    membership.planName ||
+                                    payment.description ||
+                                    "Membership",
+
+                                amount:
+                                    Number(
+                                        payment.amount ||
+                                        membership.monthlyFee ||
+                                        0
+                                    ),
+
+                                method:
+                                    payment.method ||
+                                    "Razorpay",
+
+                                date:
+                                    formatDate(
+                                        payment.paymentDate
+                                    ),
+
+                                time:
+                                    formatTime(
+                                        payment.paymentDate
+                                    ),
+
+                                status:
+                                    payment.status ||
+                                    "Pending",
+
+                                transactionId:
+                                    payment.transactionId ||
+                                    "—"
+
+                            };
+
+                        }
+                    );
+
+
+                setPayments(
+                    formattedPayments
+                );
+
+            } catch (err) {
+
+                console.error(
+                    "Load payments error:",
+                    err
+                );
+
+
+                setError(
+                    err.message ||
+                    "Unable to load payments."
+                );
+
+            } finally {
+
+                setLoading(false);
+
+            }
+
+        };
+
+
+    /* =====================================================
+       LOAD ON PAGE OPEN
+    ===================================================== */
+
+    useEffect(() => {
+
+        loadPayments();
+
+    }, []);
+
+
+    /* =====================================================
+       STATISTICS
+    ===================================================== */
+
+    const statistics =
+        useMemo(() => {
+
+            const successfulPayments =
+                payments.filter(
+                    (payment) =>
+                        payment.status ===
+                        "Successful"
+                );
+
+
+            const pendingPayments =
+                payments.filter(
+                    (payment) =>
+                        payment.status ===
+                        "Pending"
+                );
+
+
+            const failedPayments =
+                payments.filter(
+                    (payment) =>
+                        payment.status ===
+                        "Failed"
+                );
+
+
+            const totalRevenue =
+                successfulPayments.reduce(
+                    (
+                        total,
+                        payment
+                    ) =>
+                        total +
+                        Number(
+                            payment.amount ||
+                            0
+                        ),
+                    0
+                );
+
+
+            const pendingAmount =
+                pendingPayments.reduce(
+                    (
+                        total,
+                        payment
+                    ) =>
+                        total +
+                        Number(
+                            payment.amount ||
+                            0
+                        ),
+                    0
+                );
+
+
+            return {
+
+                totalRevenue,
+
+                successful:
+                    successfulPayments.length,
+
+                pending:
+                    pendingPayments.length,
+
+                failed:
+                    failedPayments.length,
+
+                pendingAmount
+
+            };
+
+        }, [payments]);
+
+
+    /* =====================================================
+       SEARCH + FILTER
+    ===================================================== */
+
+    const filteredPayments =
+        useMemo(() => {
+
+            const search =
+                searchTerm
+                    .toLowerCase()
+                    .trim();
+
+
+            return payments.filter(
+                (payment) => {
+
+                    const matchesSearch =
+
+                        String(
+                            payment.id ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search)
+
+                        ||
+
+                        String(
+                            payment.member ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search)
+
+                        ||
+
+                        String(
+                            payment.studentId ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search)
+
+                        ||
+
+                        String(
+                            payment.email ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search)
+
+                        ||
+
+                        String(
+                            payment.transactionId ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search);
+
+
+                    const matchesStatus =
+                        statusFilter ===
+                        "All" ||
+                        payment.status ===
+                        statusFilter;
+
+
+                    const matchesType =
+                        typeFilter ===
+                        "All" ||
+                        payment.type ===
+                        typeFilter;
+
+
+                    return (
+                        matchesSearch &&
+                        matchesStatus &&
+                        matchesType
+                    );
+
+                }
+            );
+
+        }, [
+            payments,
+            searchTerm,
+            statusFilter,
+            typeFilter
+        ]);
+
+
+    /* =====================================================
+       UPDATE PAYMENT STATUS
+    ===================================================== */
+
+    const updatePaymentStatus =
+        async (
+            payment,
+            status
+        ) => {
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_BASE}/${payment._id}/status`,
+                        {
+                            method: "PATCH",
+                            headers:
+                                getHeaders(),
+                            body:
+                                JSON.stringify({
+                                    status
+                                })
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Unable to update payment status."
+                    );
+
+                }
+
+
+                alert(
+                    `Payment marked as ${status.toLowerCase()}.`
+                );
+
+
+                setSelectedPayment(
+                    null
+                );
+
+
+                await loadPayments();
+
+            } catch (err) {
+
+                console.error(
+                    "Update payment status error:",
+                    err
+                );
+
+
+                alert(
+                    err.message ||
+                    "Unable to update payment status."
+                );
+
+            }
+
+        };
+
+
+    /* =====================================================
+       MARK SUCCESSFUL
+    ===================================================== */
+
+    const handleMarkSuccessful =
+        (payment) => {
+
+            updatePaymentStatus(
+                payment,
+                "Successful"
+            );
+
+        };
+
+
+    /* =====================================================
+       MARK FAILED
+    ===================================================== */
+
+    const handleMarkFailed =
+        (payment) => {
+
+            updatePaymentStatus(
+                payment,
+                "Failed"
+            );
+
+        };
+
+
+    /* =====================================================
+       VIEW PAYMENT
+    ===================================================== */
+
+    const handleViewPayment =
+        (payment) => {
+
+            setSelectedPayment(
+                payment
+            );
+
+        };
+
+
+    /* =====================================================
+       CLOSE MODAL
+    ===================================================== */
 
     const closeModal = () => {
-        setSelectedPayment(null);
+
+        setSelectedPayment(
+            null
+        );
+
     };
 
-    const formatAmount = (amount) => {
-        return `₹${amount.toLocaleString("en-IN")}`;
-    };
+
+    /* =====================================================
+       FORMAT AMOUNT
+    ===================================================== */
+
+    const formatAmount =
+        (amount) => {
+
+            return `₹${Number(
+                amount || 0
+            ).toLocaleString(
+                "en-IN"
+            )}`;
+
+        };
+
+
+    /* =====================================================
+       SUCCESS RATE
+    ===================================================== */
 
     const successRate =
         payments.length > 0
+
             ? Math.round(
-                (statistics.successful / payments.length) * 100
+                (
+                    statistics.successful /
+                    payments.length
+                ) *
+                100
             )
+
             : 0;
+
+
+    /* =====================================================
+       AVERAGE PAYMENT
+    ===================================================== */
 
     const averagePayment =
         statistics.successful > 0
+
             ? Math.round(
                 statistics.totalRevenue /
                 statistics.successful
             )
+
             : 0;
 
+
+    /* =====================================================
+       RENDER
+    ===================================================== */
+
     return (
+
         <div className="admin-payments-page">
 
-            {/* ================= SIDEBAR ================= */}
+
+            {/* =================================================
+                SIDEBAR
+            ================================================= */}
 
             <aside className="admin-sidebar">
+
+
+                {/* LOGO */}
 
                 <div className="admin-sidebar-logo">
 
@@ -327,19 +808,33 @@ function AdminPayments() {
                         </span>
 
                         <div>
-                            <strong>LibraSpace</strong>
-                            <small>Admin Portal</small>
+
+                            <strong>
+                                LibraSpace
+                            </strong>
+
+                            <small>
+                                Admin Portal
+                            </small>
+
                         </div>
 
                     </Link>
 
                 </div>
 
+
+                {/* NAVIGATION */}
+
                 <nav className="admin-navigation">
+
 
                     <p className="admin-nav-title">
                         MAIN MENU
                     </p>
+
+
+                    {/* DASHBOARD */}
 
                     <Link
                         to="/admin/dashboard"
@@ -347,19 +842,17 @@ function AdminPayments() {
                             "/admin/dashboard"
                         )}`}
                     >
-                        <span>📊</span>
+
+                        <span>
+                            📊
+                        </span>
+
                         Dashboard
+
                     </Link>
 
-                    <Link
-                        to="/admin/books"
-                        className={`admin-nav-link ${isActive(
-                            "/admin/books"
-                        )}`}
-                    >
-                        <span>📚</span>
-                        Manage Books
-                    </Link>
+
+                    {/* MANAGE SEATS */}
 
                     <Link
                         to="/admin/seats"
@@ -367,9 +860,17 @@ function AdminPayments() {
                             "/admin/seats"
                         )}`}
                     >
-                        <span>💺</span>
+
+                        <span>
+                            💺
+                        </span>
+
                         Manage Seats
+
                     </Link>
+
+
+                    {/* RESERVATIONS */}
 
                     <Link
                         to="/admin/reservations"
@@ -377,13 +878,24 @@ function AdminPayments() {
                             "/admin/reservations"
                         )}`}
                     >
-                        <span>📅</span>
+
+                        <span>
+                            📅
+                        </span>
+
                         Reservations
+
                     </Link>
+
+
+                    {/* MANAGEMENT */}
 
                     <p className="admin-nav-title second-title">
                         MANAGEMENT
                     </p>
+
+
+                    {/* MEMBERS */}
 
                     <Link
                         to="/admin/members"
@@ -391,9 +903,17 @@ function AdminPayments() {
                             "/admin/members"
                         )}`}
                     >
-                        <span>👥</span>
+
+                        <span>
+                            👥
+                        </span>
+
                         Members
+
                     </Link>
+
+
+                    {/* MEMBERSHIPS */}
 
                     <Link
                         to="/admin/memberships"
@@ -401,9 +921,17 @@ function AdminPayments() {
                             "/admin/memberships"
                         )}`}
                     >
-                        <span>🎫</span>
+
+                        <span>
+                            🎫
+                        </span>
+
                         Memberships
+
                     </Link>
+
+
+                    {/* PAYMENTS */}
 
                     <Link
                         to="/admin/payments"
@@ -411,9 +939,17 @@ function AdminPayments() {
                             "/admin/payments"
                         )}`}
                     >
-                        <span>💳</span>
+
+                        <span>
+                            💳
+                        </span>
+
                         Payments
+
                     </Link>
+
+
+                    {/* REPORTS */}
 
                     <Link
                         to="/admin/reports"
@@ -421,13 +957,24 @@ function AdminPayments() {
                             "/admin/reports"
                         )}`}
                     >
-                        <span>📈</span>
+
+                        <span>
+                            📈
+                        </span>
+
                         Reports
+
                     </Link>
+
+
+                    {/* SYSTEM */}
 
                     <p className="admin-nav-title second-title">
                         SYSTEM
                     </p>
+
+
+                    {/* SETTINGS */}
 
                     <Link
                         to="/admin/settings"
@@ -435,22 +982,36 @@ function AdminPayments() {
                             "/admin/settings"
                         )}`}
                     >
-                        <span>⚙️</span>
+
+                        <span>
+                            ⚙️
+                        </span>
+
                         Settings
+
                     </Link>
 
                 </nav>
 
+
+                {/* LOGOUT */}
+
                 <div className="admin-sidebar-bottom">
 
-                    
-
                     <button
+                        type="button"
                         className="admin-logout-button"
-                        onClick={handleLogout}
+                        onClick={
+                            handleLogout
+                        }
                     >
-                        <span>🚪</span>
+
+                        <span>
+                            🚪
+                        </span>
+
                         Logout
+
                     </button>
 
                 </div>
@@ -458,13 +1019,17 @@ function AdminPayments() {
             </aside>
 
 
-            {/* ================= MAIN ================= */}
+            {/* =================================================
+                MAIN
+            ================================================= */}
 
             <main className="admin-main">
 
-                {/* ================= TOPBAR ================= */}
+
+                {/* TOPBAR */}
 
                 <header className="admin-topbar">
+
 
                     <div className="admin-topbar-left">
 
@@ -478,30 +1043,42 @@ function AdminPayments() {
 
                     </div>
 
+
                     <div className="admin-topbar-right">
 
+
                         <button
+                            type="button"
                             className="admin-notification"
                             title="Notifications"
                         >
+
                             🔔
+
                             <span></span>
+
                         </button>
+
 
                         <div className="admin-profile">
 
                             <div className="admin-avatar">
-                                A
+
+                                {adminName
+                                    .charAt(0)
+                                    .toUpperCase()}
+
                             </div>
+
 
                             <div className="admin-profile-info">
 
                                 <strong>
-                                    Administrator
+                                    {adminName}
                                 </strong>
 
                                 <small>
-                                    admin@libraspace.com
+                                    {adminEmail}
                                 </small>
 
                             </div>
@@ -513,9 +1090,10 @@ function AdminPayments() {
                 </header>
 
 
-                {/* ================= CONTENT ================= */}
+                {/* CONTENT */}
 
                 <div className="admin-content">
+
 
                     {/* BREADCRUMB */}
 
@@ -525,7 +1103,9 @@ function AdminPayments() {
                             Dashboard
                         </Link>
 
-                        <span>›</span>
+                        <span>
+                            ›
+                        </span>
 
                         <span>
                             Payments
@@ -555,6 +1135,7 @@ function AdminPayments() {
 
                         </div>
 
+
                         <div className="payment-security-badge">
 
                             <span>
@@ -578,9 +1159,12 @@ function AdminPayments() {
                     </section>
 
 
-                    {/* ================= STATISTICS ================= */}
+                    {/* =================================================
+                        STATISTICS
+                    ================================================= */}
 
                     <section className="payment-stat-grid">
+
 
                         <div className="payment-stat-card revenue-card">
 
@@ -601,7 +1185,7 @@ function AdminPayments() {
                                 </h3>
 
                                 <small>
-                                    ↑ This month
+                                    Successful payments
                                 </small>
 
                             </div>
@@ -688,9 +1272,12 @@ function AdminPayments() {
                     </section>
 
 
-                    {/* ================= OVERVIEW ================= */}
+                    {/* =================================================
+                        OVERVIEW
+                    ================================================= */}
 
                     <section className="payment-overview">
+
 
                         <div className="overview-card">
 
@@ -715,7 +1302,8 @@ function AdminPayments() {
                                 <div
                                     className="overview-progress-bar"
                                     style={{
-                                        width: `${successRate}%`
+                                        width:
+                                            `${successRate}%`
                                     }}
                                 ></div>
 
@@ -778,9 +1366,12 @@ function AdminPayments() {
                     </section>
 
 
-                    {/* ================= PAYMENT TABLE ================= */}
+                    {/* =================================================
+                        PAYMENT PANEL
+                    ================================================= */}
 
                     <section className="payments-panel">
+
 
                         <div className="panel-header">
 
@@ -796,6 +1387,7 @@ function AdminPayments() {
 
                             </div>
 
+
                             <div className="transaction-count">
 
                                 🧾
@@ -808,9 +1400,14 @@ function AdminPayments() {
                         </div>
 
 
-                        {/* FILTERS */}
+                        {/* =================================================
+                            FILTERS
+                        ================================================= */}
 
                         <div className="payment-filters">
+
+
+                            {/* SEARCH */}
 
                             <div className="payment-search">
 
@@ -821,29 +1418,41 @@ function AdminPayments() {
                                 <input
                                     type="text"
                                     placeholder="Search payment ID, member, email or transaction..."
-                                    value={searchTerm}
-                                    onChange={(e) =>
+                                    value={
+                                        searchTerm
+                                    }
+                                    onChange={(
+                                        e
+                                    ) =>
                                         setSearchTerm(
                                             e.target.value
                                         )
                                     }
                                 />
 
+
                                 {searchTerm && (
 
                                     <button
+                                        type="button"
                                         onClick={() =>
-                                            setSearchTerm("")
+                                            setSearchTerm(
+                                                ""
+                                            )
                                         }
                                         className="clear-search"
                                     >
+
                                         ×
+
                                     </button>
 
                                 )}
 
                             </div>
 
+
+                            {/* STATUS */}
 
                             <div className="filter-group">
 
@@ -852,7 +1461,9 @@ function AdminPayments() {
                                 </label>
 
                                 <select
-                                    value={statusFilter}
+                                    value={
+                                        statusFilter
+                                    }
                                     onChange={(e) =>
                                         setStatusFilter(
                                             e.target.value
@@ -881,6 +1492,8 @@ function AdminPayments() {
                             </div>
 
 
+                            {/* TYPE */}
+
                             <div className="filter-group">
 
                                 <label>
@@ -888,7 +1501,9 @@ function AdminPayments() {
                                 </label>
 
                                 <select
-                                    value={typeFilter}
+                                    value={
+                                        typeFilter
+                                    }
                                     onChange={(e) =>
                                         setTypeFilter(
                                             e.target.value
@@ -911,11 +1526,57 @@ function AdminPayments() {
                         </div>
 
 
-                        {/* TABLE */}
+                        {/* =================================================
+                            ERROR
+                        ================================================= */}
+
+                        {error && (
+
+                            <div
+                                style={{
+                                    padding: "16px",
+                                    marginBottom: "20px",
+                                    borderRadius: "10px",
+                                    background:
+                                        "#fdf0f0",
+                                    color:
+                                        "#b45353",
+                                    border:
+                                        "1px solid #efcccc"
+                                }}
+                            >
+
+                                {error}
+
+                                <button
+                                    type="button"
+                                    onClick={
+                                        loadPayments
+                                    }
+                                    style={{
+                                        marginLeft: "12px",
+                                        cursor:
+                                            "pointer"
+                                    }}
+                                >
+
+                                    Retry
+
+                                </button>
+
+                            </div>
+
+                        )}
+
+
+                        {/* =================================================
+                            TABLE
+                        ================================================= */}
 
                         <div className="payments-table-wrapper">
 
                             <table className="payments-table">
+
 
                                 <thead>
 
@@ -957,14 +1618,50 @@ function AdminPayments() {
 
                                 </thead>
 
+
                                 <tbody>
 
-                                    {filteredPayments.length > 0 ? (
+
+                                    {loading ? (
+
+                                        <tr>
+
+                                            <td
+                                                colSpan="8"
+                                                className="empty-state"
+                                            >
+
+                                                <div className="empty-icon">
+                                                    ⏳
+                                                </div>
+
+                                                <h3>
+                                                    Loading payments...
+                                                </h3>
+
+                                                <p>
+                                                    Fetching payment data from MongoDB.
+                                                </p>
+
+                                            </td>
+
+                                        </tr>
+
+                                    ) : filteredPayments.length > 0 ? (
 
                                         filteredPayments.map(
-                                            payment => (
+                                            (
+                                                payment
+                                            ) => (
 
-                                                <tr key={payment.id}>
+                                                <tr
+                                                    key={
+                                                        payment._id ||
+                                                        payment.id
+                                                    }
+                                                >
+
+                                                    {/* PAYMENT */}
 
                                                     <td>
 
@@ -981,7 +1678,9 @@ function AdminPayments() {
                                                                 </strong>
 
                                                                 <span>
-                                                                    {payment.transactionId}
+                                                                    {
+                                                                        payment.transactionId
+                                                                    }
                                                                 </span>
 
                                                             </div>
@@ -990,24 +1689,36 @@ function AdminPayments() {
 
                                                     </td>
 
+
+                                                    {/* MEMBER */}
 
                                                     <td>
 
                                                         <div className="member-cell">
 
                                                             <div className="member-avatar">
-                                                                {payment.member
-                                                                    .charAt(0)}
+
+                                                                {String(
+                                                                    payment.member ||
+                                                                    "M"
+                                                                )
+                                                                    .charAt(0)
+                                                                    .toUpperCase()}
+
                                                             </div>
 
                                                             <div>
 
                                                                 <strong>
-                                                                    {payment.member}
+                                                                    {
+                                                                        payment.member
+                                                                    }
                                                                 </strong>
 
                                                                 <span>
-                                                                    {payment.studentId}
+                                                                    {
+                                                                        payment.studentId
+                                                                    }
                                                                 </span>
 
                                                             </div>
@@ -1017,16 +1728,22 @@ function AdminPayments() {
                                                     </td>
 
 
+                                                    {/* TYPE */}
+
                                                     <td>
 
                                                         <div className="type-cell">
 
                                                             <strong>
-                                                                {payment.type}
+                                                                {
+                                                                    payment.type
+                                                                }
                                                             </strong>
 
                                                             <span>
-                                                                {payment.plan}
+                                                                {
+                                                                    payment.plan
+                                                                }
                                                             </span>
 
                                                         </div>
@@ -1034,16 +1751,24 @@ function AdminPayments() {
                                                     </td>
 
 
+                                                    {/* AMOUNT */}
+
                                                     <td>
 
                                                         <strong className="amount-cell">
-                                                            {formatAmount(
-                                                                payment.amount
-                                                            )}
+
+                                                            {
+                                                                formatAmount(
+                                                                    payment.amount
+                                                                )
+                                                            }
+
                                                         </strong>
 
                                                     </td>
 
+
+                                                    {/* METHOD */}
 
                                                     <td>
 
@@ -1054,24 +1779,32 @@ function AdminPayments() {
                                                             </span>
 
                                                             <span>
-                                                                {payment.method}
+                                                                {
+                                                                    payment.method
+                                                                }
                                                             </span>
 
                                                         </div>
 
                                                     </td>
 
+
+                                                    {/* DATE */}
 
                                                     <td>
 
                                                         <div className="date-cell">
 
                                                             <strong>
-                                                                {payment.date}
+                                                                {
+                                                                    payment.date
+                                                                }
                                                             </strong>
 
                                                             <span>
-                                                                {payment.time}
+                                                                {
+                                                                    payment.time
+                                                                }
                                                             </span>
 
                                                         </div>
@@ -1079,10 +1812,14 @@ function AdminPayments() {
                                                     </td>
 
 
+                                                    {/* STATUS */}
+
                                                     <td>
 
                                                         <span
-                                                            className={`payment-status ${payment.status
+                                                            className={`payment-status ${String(
+                                                                payment.status
+                                                            )
                                                                 .toLowerCase()
                                                                 .replace(
                                                                     " ",
@@ -1103,18 +1840,27 @@ function AdminPayments() {
                                                                 "×"}
 
                                                             {" "}
-                                                            {payment.status}
+
+                                                            {
+                                                                payment.status
+                                                            }
 
                                                         </span>
 
                                                     </td>
 
 
+                                                    {/* ACTION */}
+
                                                     <td>
 
                                                         <div className="payment-actions">
 
+
+                                                            {/* VIEW */}
+
                                                             <button
+                                                                type="button"
                                                                 className="table-action view-action"
                                                                 title="View Payment"
                                                                 onClick={() =>
@@ -1123,41 +1869,53 @@ function AdminPayments() {
                                                                     )
                                                                 }
                                                             >
+
                                                                 👁
+
                                                             </button>
 
+
+                                                            {/* SUCCESS */}
 
                                                             {payment.status ===
                                                                 "Pending" && (
 
                                                                 <button
+                                                                    type="button"
                                                                     className="table-action success-action"
                                                                     title="Mark Successful"
                                                                     onClick={() =>
                                                                         handleMarkSuccessful(
-                                                                            payment.id
+                                                                            payment
                                                                         )
                                                                     }
                                                                 >
+
                                                                     ✓
+
                                                                 </button>
 
                                                             )}
 
 
+                                                            {/* FAILED */}
+
                                                             {payment.status ===
                                                                 "Pending" && (
 
                                                                 <button
+                                                                    type="button"
                                                                     className="table-action fail-action"
                                                                     title="Mark Failed"
                                                                     onClick={() =>
                                                                         handleMarkFailed(
-                                                                            payment.id
+                                                                            payment
                                                                         )
                                                                     }
                                                                 >
+
                                                                     ×
+
                                                                 </button>
 
                                                             )}
@@ -1169,6 +1927,7 @@ function AdminPayments() {
                                                 </tr>
 
                                             )
+
                                         )
 
                                     ) : (
@@ -1213,16 +1972,25 @@ function AdminPayments() {
                             <span>
 
                                 Showing{" "}
+
                                 <strong>
-                                    {filteredPayments.length}
-                                </strong>{" "}
-                                of{" "}
+                                    {
+                                        filteredPayments.length
+                                    }
+                                </strong>
+
+                                {" "}of{" "}
+
                                 <strong>
-                                    {payments.length}
-                                </strong>{" "}
-                                payments
+                                    {
+                                        payments.length
+                                    }
+                                </strong>
+
+                                {" "}payments
 
                             </span>
+
 
                             <div className="footer-info">
 
@@ -1238,7 +2006,9 @@ function AdminPayments() {
                     </section>
 
 
-                    {/* ================= INFORMATION ================= */}
+                    {/* =================================================
+                        PAYMENT INFORMATION
+                    ================================================= */}
 
                     <section className="payment-info-section">
 
@@ -1253,10 +2023,9 @@ function AdminPayments() {
                             </h4>
 
                             <p>
-                                This page currently displays demo payment
-                                transactions for the LibraSpace frontend.
-                                Razorpay Test Mode can be connected later
-                                when the backend payment API is configured.
+                                Payment records displayed here are
+                                retrieved from the LibraSpace backend
+                                and stored in MongoDB.
                             </p>
 
                         </div>
@@ -1264,7 +2033,7 @@ function AdminPayments() {
                     </section>
 
 
-                    {/* ================= FOOTER ================= */}
+                    {/* FOOTER */}
 
                     <footer className="admin-footer">
 
@@ -1291,21 +2060,30 @@ function AdminPayments() {
             </main>
 
 
-            {/* ================= PAYMENT MODAL ================= */}
+            {/* =================================================
+                PAYMENT MODAL
+            ================================================= */}
 
             {selectedPayment && (
 
                 <div
                     className="payment-modal-overlay"
-                    onClick={closeModal}
+                    onClick={
+                        closeModal
+                    }
                 >
 
                     <div
                         className="payment-modal"
-                        onClick={(e) =>
+                        onClick={(
+                            e
+                        ) =>
                             e.stopPropagation()
                         }
                     >
+
+
+                        {/* MODAL HEADER */}
 
                         <div className="modal-header">
 
@@ -1316,26 +2094,37 @@ function AdminPayments() {
                                 </span>
 
                                 <h3>
-                                    {selectedPayment.id}
+                                    {
+                                        selectedPayment.id
+                                    }
                                 </h3>
 
                             </div>
 
+
                             <button
+                                type="button"
                                 className="modal-close"
-                                onClick={closeModal}
+                                onClick={
+                                    closeModal
+                                }
                             >
+
                                 ×
+
                             </button>
 
                         </div>
 
+
+                        {/* SUMMARY */}
 
                         <div className="modal-payment-summary">
 
                             <div className="modal-payment-icon">
                                 ₹
                             </div>
+
 
                             <div>
 
@@ -1344,28 +2133,40 @@ function AdminPayments() {
                                 </span>
 
                                 <strong>
-                                    {formatAmount(
-                                        selectedPayment.amount
-                                    )}
+                                    {
+                                        formatAmount(
+                                            selectedPayment.amount
+                                        )
+                                    }
                                 </strong>
 
                             </div>
 
+
                             <span
-                                className={`payment-status ${selectedPayment.status
+                                className={`payment-status ${String(
+                                    selectedPayment.status
+                                )
                                     .toLowerCase()
                                     .replace(
                                         " ",
                                         "-"
                                     )}`}
                             >
-                                {selectedPayment.status}
+
+                                {
+                                    selectedPayment.status
+                                }
+
                             </span>
 
                         </div>
 
 
+                        {/* DETAILS */}
+
                         <div className="modal-details-grid">
+
 
                             <div className="detail-item">
 
@@ -1374,7 +2175,9 @@ function AdminPayments() {
                                 </span>
 
                                 <strong>
-                                    {selectedPayment.member}
+                                    {
+                                        selectedPayment.member
+                                    }
                                 </strong>
 
                             </div>
@@ -1387,7 +2190,9 @@ function AdminPayments() {
                                 </span>
 
                                 <strong>
-                                    {selectedPayment.studentId}
+                                    {
+                                        selectedPayment.studentId
+                                    }
                                 </strong>
 
                             </div>
@@ -1400,7 +2205,9 @@ function AdminPayments() {
                                 </span>
 
                                 <strong>
-                                    {selectedPayment.email}
+                                    {
+                                        selectedPayment.email
+                                    }
                                 </strong>
 
                             </div>
@@ -1413,7 +2220,9 @@ function AdminPayments() {
                                 </span>
 
                                 <strong>
-                                    {selectedPayment.type}
+                                    {
+                                        selectedPayment.type
+                                    }
                                 </strong>
 
                             </div>
@@ -1426,7 +2235,9 @@ function AdminPayments() {
                                 </span>
 
                                 <strong>
-                                    {selectedPayment.plan}
+                                    {
+                                        selectedPayment.plan
+                                    }
                                 </strong>
 
                             </div>
@@ -1439,7 +2250,9 @@ function AdminPayments() {
                                 </span>
 
                                 <strong>
-                                    {selectedPayment.method}
+                                    {
+                                        selectedPayment.method
+                                    }
                                 </strong>
 
                             </div>
@@ -1452,7 +2265,9 @@ function AdminPayments() {
                                 </span>
 
                                 <strong>
-                                    {selectedPayment.date}
+                                    {
+                                        selectedPayment.date
+                                    }
                                 </strong>
 
                             </div>
@@ -1465,7 +2280,9 @@ function AdminPayments() {
                                 </span>
 
                                 <strong>
-                                    {selectedPayment.time}
+                                    {
+                                        selectedPayment.time
+                                    }
                                 </strong>
 
                             </div>
@@ -1478,13 +2295,17 @@ function AdminPayments() {
                                 </span>
 
                                 <strong className="transaction-value">
-                                    {selectedPayment.transactionId}
+                                    {
+                                        selectedPayment.transactionId
+                                    }
                                 </strong>
 
                             </div>
 
                         </div>
 
+
+                        {/* SECURITY */}
 
                         <div className="modal-security">
 
@@ -1498,31 +2319,34 @@ function AdminPayments() {
                         </div>
 
 
+                        {/* ACTIONS */}
+
                         <div className="modal-actions">
 
                             <button
+                                type="button"
                                 className="modal-secondary-button"
-                                onClick={closeModal}
+                                onClick={
+                                    closeModal
+                                }
                             >
+
                                 Close
+
                             </button>
+
 
                             {selectedPayment.status ===
                                 "Pending" && (
 
                                 <button
+                                    type="button"
                                     className="modal-success-button"
-                                    onClick={() => {
-
+                                    onClick={() =>
                                         handleMarkSuccessful(
-                                            selectedPayment.id
-                                        );
-
-                                        setSelectedPayment(
-                                            null
-                                        );
-
-                                    }}
+                                            selectedPayment
+                                        )
+                                    }
                                 >
 
                                     ✓
@@ -1542,7 +2366,10 @@ function AdminPayments() {
             )}
 
         </div>
+
     );
+
 }
+
 
 export default AdminPayments;

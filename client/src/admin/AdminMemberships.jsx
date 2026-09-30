@@ -1,157 +1,24 @@
-import React, { useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, {
+    useEffect,
+    useMemo,
+    useState
+} from "react";
+
+import {
+    Link,
+    useLocation,
+    useNavigate
+} from "react-router-dom";
+
 import "./AdminMemberships.css";
 
 
 /* =========================================================
-   INITIAL MEMBERSHIP DATA
+   API
 ========================================================= */
 
-const initialMemberships = [
-    {
-        id: "MEM-001",
-        memberName: "Ananya Sharma",
-        email: "ananya.sharma@gmail.com",
-        studentId: "LIB2026001",
-        plan: "Premium Reader",
-        amount: 499,
-        startDate: "12 Sep 2026",
-        expiryDate: "10 Oct 2026",
-        status: "Active",
-    },
-
-    {
-        id: "MEM-002",
-        memberName: "Rahul Kumar",
-        email: "rahul.kumar@gmail.com",
-        studentId: "LIB2026002",
-        plan: "Premium Reader",
-        amount: 499,
-        startDate: "05 Aug 2026",
-        expiryDate: "05 Oct 2026",
-        status: "Active",
-    },
-
-    {
-        id: "MEM-003",
-        memberName: "Priya Nair",
-        email: "priya.nair@gmail.com",
-        studentId: "LIB2026003",
-        plan: "Basic Reader",
-        amount: 299,
-        startDate: "15 Jul 2026",
-        expiryDate: "15 Sep 2026",
-        status: "Expiring Soon",
-    },
-
-    {
-        id: "MEM-004",
-        memberName: "Arjun Menon",
-        email: "arjun.menon@gmail.com",
-        studentId: "LIB2026004",
-        plan: "Premium Reader",
-        amount: 499,
-        startDate: "20 Jun 2026",
-        expiryDate: "20 Sep 2026",
-        status: "Active",
-    },
-
-    {
-        id: "MEM-005",
-        memberName: "Sneha Reddy",
-        email: "sneha.reddy@gmail.com",
-        studentId: "LIB2026005",
-        plan: "Premium Reader",
-        amount: 499,
-        startDate: "10 Mar 2026",
-        expiryDate: "10 Sep 2026",
-        status: "Expired",
-    },
-
-    {
-        id: "MEM-006",
-        memberName: "Vikram Singh",
-        email: "vikram.singh@gmail.com",
-        studentId: "LIB2026006",
-        plan: "Basic Reader",
-        amount: 299,
-        startDate: "18 Aug 2026",
-        expiryDate: "18 Sep 2026",
-        status: "Expiring Soon",
-    },
-
-    {
-        id: "MEM-007",
-        memberName: "Meera Iyer",
-        email: "meera.iyer@gmail.com",
-        studentId: "LIB2026007",
-        plan: "Premium Reader",
-        amount: 499,
-        startDate: "12 May 2026",
-        expiryDate: "12 Oct 2026",
-        status: "Active",
-    },
-
-    {
-        id: "MEM-008",
-        memberName: "Karan Patel",
-        email: "karan.patel@gmail.com",
-        studentId: "LIB2026008",
-        plan: "Basic Reader",
-        amount: 299,
-        startDate: "03 Jan 2026",
-        expiryDate: "03 Jul 2026",
-        status: "Expired",
-    },
-
-    {
-        id: "MEM-009",
-        memberName: "Divya Krishnan",
-        email: "divya.krishnan@gmail.com",
-        studentId: "LIB2026009",
-        plan: "Premium Reader",
-        amount: 499,
-        startDate: "01 Sep 2026",
-        expiryDate: "01 Oct 2026",
-        status: "Active",
-    },
-
-    {
-        id: "MEM-010",
-        memberName: "Aditya Rao",
-        email: "aditya.rao@gmail.com",
-        studentId: "LIB2026010",
-        plan: "Premium Reader",
-        amount: 499,
-        startDate: "25 Aug 2026",
-        expiryDate: "25 Sep 2026",
-        status: "Expiring Soon",
-    },
-
-    {
-        id: "MEM-011",
-        memberName: "Nisha Kapoor",
-        email: "nisha.kapoor@gmail.com",
-        studentId: "LIB2026011",
-        plan: "Basic Reader",
-        amount: 299,
-        startDate: "08 Aug 2026",
-        expiryDate: "08 Sep 2026",
-        status: "Expired",
-    },
-
-    {
-        id: "MEM-012",
-        memberName: "Rohan Das",
-        email: "rohan.das@gmail.com",
-        studentId: "LIB2026012",
-        plan: "Premium Reader",
-        amount: 499,
-        startDate: "02 Sep 2026",
-        expiryDate: "02 Oct 2026",
-        status: "Active",
-    },
-];
+const API_BASE =
+    "http://localhost:5000/api/admin/memberships";
 
 
 /* =========================================================
@@ -162,6 +29,74 @@ function AdminMemberships() {
 
     const location = useLocation();
     const navigate = useNavigate();
+
+
+    /* =====================================================
+       STATES
+    ===================================================== */
+
+    const [
+        memberships,
+        setMemberships
+    ] = useState([]);
+
+    const [
+        searchTerm,
+        setSearchTerm
+    ] = useState("");
+
+    const [
+        statusFilter,
+        setStatusFilter
+    ] = useState("All");
+
+    const [
+        selectedMembership,
+        setSelectedMembership
+    ] = useState(null);
+
+    const [
+        loading,
+        setLoading
+    ] = useState(true);
+
+    const [
+        error,
+        setError
+    ] = useState("");
+
+
+    /* =====================================================
+       ADMIN INFORMATION
+    ===================================================== */
+
+    const storedAdmin = useMemo(() => {
+
+        try {
+
+            return JSON.parse(
+                localStorage.getItem(
+                    "adminUser"
+                )
+            );
+
+        } catch {
+
+            return null;
+
+        }
+
+    }, []);
+
+
+    const adminName =
+        storedAdmin?.name ||
+        "Administrator";
+
+
+    const adminEmail =
+        storedAdmin?.email ||
+        "admin@libraspace.com";
 
 
     /* =====================================================
@@ -178,31 +113,363 @@ function AdminMemberships() {
 
 
     /* =====================================================
-       LOGOUT
+       AUTH HEADERS
     ===================================================== */
 
-    const handleLogout = () => {
+    const getHeaders = () => {
 
-        navigate("/admin/login");
+        const token =
+            localStorage.getItem(
+                "adminToken"
+            );
+
+
+        return {
+
+            "Content-Type":
+                "application/json",
+
+            ...(token
+                ? {
+                    Authorization:
+                        `Bearer ${token}`
+                }
+                : {})
+
+        };
 
     };
 
 
     /* =====================================================
-       STATES
+       FORMAT DATE
     ===================================================== */
 
-    const [memberships, setMemberships] =
-        useState(initialMemberships);
+    const formatDate = (dateValue) => {
 
-    const [searchTerm, setSearchTerm] =
-        useState("");
+        if (!dateValue) {
 
-    const [statusFilter, setStatusFilter] =
-        useState("All");
+            return "—";
 
-    const [selectedMembership, setSelectedMembership] =
-        useState(null);
+        }
+
+
+        const date =
+            new Date(dateValue);
+
+
+        if (Number.isNaN(
+            date.getTime()
+        )) {
+
+            return "—";
+
+        }
+
+
+        return date.toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+
+    };
+
+
+    /* =====================================================
+       CALCULATE STATUS
+    ===================================================== */
+
+    const calculateStatus = (
+        membership
+    ) => {
+
+        if (
+            membership.status ===
+            "cancelled"
+        ) {
+
+            return "Expired";
+
+        }
+
+
+        if (
+            membership.status ===
+            "expired"
+        ) {
+
+            return "Expired";
+
+        }
+
+
+        if (!membership.expiryDate) {
+
+            return "Active";
+
+        }
+
+
+        const today =
+            new Date();
+
+
+        const expiryDate =
+            new Date(
+                membership.expiryDate
+            );
+
+
+        const difference =
+            expiryDate.getTime() -
+            today.getTime();
+
+
+        const daysRemaining =
+            Math.ceil(
+                difference /
+                (
+                    1000 *
+                    60 *
+                    60 *
+                    24
+                )
+            );
+
+
+        if (
+            daysRemaining < 0
+        ) {
+
+            return "Expired";
+
+        }
+
+
+        if (
+            daysRemaining <= 7
+        ) {
+
+            return "Expiring Soon";
+
+        }
+
+
+        return "Active";
+
+    };
+
+
+    /* =====================================================
+       LOAD MEMBERSHIPS
+    ===================================================== */
+
+    const loadMemberships =
+        async () => {
+
+            try {
+
+                setLoading(true);
+
+                setError("");
+
+
+                const response =
+                    await fetch(
+                        API_BASE,
+                        {
+                            method: "GET",
+                            headers:
+                                getHeaders()
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Unable to load memberships."
+                    );
+
+                }
+
+
+                const serverMemberships =
+                    Array.isArray(
+                        data.memberships
+                    )
+                        ? data.memberships
+                        : [];
+
+
+                const formattedMemberships =
+                    serverMemberships.map(
+                        (
+                            membership,
+                            index
+                        ) => {
+
+                            const user =
+                                membership.user ||
+                                {};
+
+
+                            const status =
+                                calculateStatus(
+                                    membership
+                                );
+
+
+                            const studentId =
+                                `LIB${new Date(
+                                    membership.startDate ||
+                                    membership.createdAt ||
+                                    Date.now()
+                                ).getFullYear()}${String(
+                                    user._id ||
+                                    membership._id ||
+                                    index
+                                )
+                                    .slice(-6)
+                                    .toUpperCase()}`;
+
+
+                            return {
+
+                                _id:
+                                    membership._id,
+
+                                id:
+                                    `MEM-${String(
+                                        membership._id ||
+                                        index
+                                    )
+                                        .slice(-6)
+                                        .toUpperCase()}`,
+
+                                memberName:
+                                    user.name ||
+                                    "Unknown Member",
+
+                                email:
+                                    user.email ||
+                                    "—",
+
+                                studentId,
+
+                                plan:
+                                    membership.planName ||
+                                    "No Plan",
+
+                                amount:
+                                    Number(
+                                        membership.monthlyFee ||
+                                        membership.amount ||
+                                        0
+                                    ),
+
+                                startDate:
+                                    formatDate(
+                                        membership.startDate
+                                    ),
+
+                                expiryDate:
+                                    formatDate(
+                                        membership.expiryDate
+                                    ),
+
+                                rawStartDate:
+                                    membership.startDate,
+
+                                rawExpiryDate:
+                                    membership.expiryDate,
+
+                                status,
+
+                                duration:
+                                    membership.planType ||
+                                    "—"
+
+                            };
+
+                        }
+                    );
+
+
+                setMemberships(
+                    formattedMemberships
+                );
+
+            } catch (err) {
+
+                console.error(
+                    "Load memberships error:",
+                    err
+                );
+
+
+                setError(
+                    err.message ||
+                    "Unable to load memberships."
+                );
+
+            } finally {
+
+                setLoading(false);
+
+            }
+
+        };
+
+
+    /* =====================================================
+       LOAD ON PAGE OPEN
+    ===================================================== */
+
+    useEffect(() => {
+
+        loadMemberships();
+
+    }, []);
+
+
+    /* =====================================================
+       LOGOUT
+    ===================================================== */
+
+    const handleLogout = () => {
+
+        localStorage.removeItem(
+            "adminToken"
+        );
+
+        localStorage.removeItem(
+            "adminUser"
+        );
+
+        localStorage.removeItem(
+            "token"
+        );
+
+        localStorage.removeItem(
+            "user"
+        );
+
+
+        navigate(
+            "/admin/login"
+        );
+
+    };
 
 
     /* =====================================================
@@ -213,22 +480,29 @@ function AdminMemberships() {
 
         return {
 
-            total: memberships.length,
+            total:
+                memberships.length,
 
-            active: memberships.filter(
-                (membership) =>
-                    membership.status === "Active"
-            ).length,
+            active:
+                memberships.filter(
+                    (membership) =>
+                        membership.status ===
+                        "Active"
+                ).length,
 
-            expiring: memberships.filter(
-                (membership) =>
-                    membership.status === "Expiring Soon"
-            ).length,
+            expiring:
+                memberships.filter(
+                    (membership) =>
+                        membership.status ===
+                        "Expiring Soon"
+                ).length,
 
-            expired: memberships.filter(
-                (membership) =>
-                    membership.status === "Expired"
-            ).length,
+            expired:
+                memberships.filter(
+                    (membership) =>
+                        membership.status ===
+                        "Expired"
+                ).length
 
         };
 
@@ -236,12 +510,34 @@ function AdminMemberships() {
 
 
     /* =====================================================
+       TOTAL RECORDED AMOUNT
+    ===================================================== */
+
+    const totalAmount =
+        useMemo(() => {
+
+            return memberships.reduce(
+                (
+                    total,
+                    membership
+                ) =>
+                    total +
+                    Number(
+                        membership.amount ||
+                        0
+                    ),
+                0
+            );
+
+        }, [memberships]);
+
+
+    /* =====================================================
        SEARCH AND FILTER
     ===================================================== */
 
-    const filteredMemberships = useMemo(() => {
-
-        return memberships.filter((membership) => {
+    const filteredMemberships =
+        useMemo(() => {
 
             const search =
                 searchTerm
@@ -249,97 +545,156 @@ function AdminMemberships() {
                     .trim();
 
 
-            const matchesSearch =
+            return memberships.filter(
+                (membership) => {
 
-                membership.memberName
-                    .toLowerCase()
-                    .includes(search)
+                    const matchesSearch =
 
-                ||
+                        String(
+                            membership.memberName ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search)
 
-                membership.email
-                    .toLowerCase()
-                    .includes(search)
+                        ||
 
-                ||
+                        String(
+                            membership.email ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search)
 
-                membership.studentId
-                    .toLowerCase()
-                    .includes(search)
+                        ||
 
-                ||
+                        String(
+                            membership.studentId ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search)
 
-                membership.id
-                    .toLowerCase()
-                    .includes(search)
+                        ||
 
-                ||
+                        String(
+                            membership.id ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search)
 
-                membership.plan
-                    .toLowerCase()
-                    .includes(search);
+                        ||
+
+                        String(
+                            membership.plan ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(search);
 
 
-            const matchesStatus =
+                    const matchesStatus =
 
-                statusFilter === "All"
+                        statusFilter ===
+                        "All"
 
-                ||
+                        ||
 
-                membership.status === statusFilter;
+                        membership.status ===
+                        statusFilter;
 
 
-            return (
-                matchesSearch &&
-                matchesStatus
+                    return (
+                        matchesSearch &&
+                        matchesStatus
+                    );
+
+                }
             );
 
-        });
-
-    }, [
-        memberships,
-        searchTerm,
-        statusFilter
-    ]);
+        }, [
+            memberships,
+            searchTerm,
+            statusFilter
+        ]);
 
 
     /* =====================================================
        RENEW MEMBERSHIP
     ===================================================== */
 
-    const handleRenew = (id) => {
+    const handleRenew = async (
+        membership
+    ) => {
 
-        const updatedMemberships =
-            memberships.map((membership) => {
-
-                if (membership.id === id) {
-
-                    return {
-                        ...membership,
-
-                        status: "Active",
-
-                        startDate: "12 Sep 2026",
-
-                        expiryDate: "12 Oct 2026",
-                    };
-
-                }
-
-                return membership;
-
-            });
+        const confirmed =
+            window.confirm(
+                `Renew membership for ${membership.memberName}?`
+            );
 
 
-        setMemberships(updatedMemberships);
+        if (!confirmed) {
+
+            return;
+
+        }
 
 
-        setSelectedMembership(null);
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE}/${membership._id}/renew`,
+                    {
+                        method: "PATCH",
+                        headers:
+                            getHeaders()
+                    }
+                );
 
 
-        alert(
-            "Membership renewed successfully."
-        );
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to renew membership."
+                );
+
+            }
+
+
+            alert(
+                "Membership renewed successfully."
+            );
+
+
+            setSelectedMembership(
+                null
+            );
+
+
+            await loadMemberships();
+
+
+        } catch (err) {
+
+            console.error(
+                "Renew membership error:",
+                err
+            );
+
+
+            alert(
+                err.message ||
+                "Failed to renew membership."
+            );
+
+        }
 
     };
 
@@ -348,24 +703,38 @@ function AdminMemberships() {
        STATUS CLASS
     ===================================================== */
 
-    const getStatusClass = (status) => {
+    const getStatusClass = (
+        status
+    ) => {
 
-        if (status === "Active") {
+        if (
+            status ===
+            "Active"
+        ) {
 
             return "status-active";
 
         }
 
-        if (status === "Expiring Soon") {
+
+        if (
+            status ===
+            "Expiring Soon"
+        ) {
 
             return "status-expiring";
 
         }
 
+
         return "status-expired";
 
     };
 
+
+    /* =====================================================
+       RENDER
+    ===================================================== */
 
     return (
 
@@ -389,6 +758,7 @@ function AdminMemberships() {
                             📚
                         </span>
 
+
                         <div>
 
                             <strong>
@@ -406,9 +776,7 @@ function AdminMemberships() {
                 </div>
 
 
-                {/* =================================================
-                    NAVIGATION
-                ================================================= */}
+                {/* NAVIGATION */}
 
                 <nav className="admin-navigation">
 
@@ -419,6 +787,8 @@ function AdminMemberships() {
                         MAIN MENU
                     </p>
 
+
+                    {/* DASHBOARD */}
 
                     <Link
                         to="/admin/dashboard"
@@ -436,21 +806,7 @@ function AdminMemberships() {
                     </Link>
 
 
-                    <Link
-                        to="/admin/books"
-                        className={`admin-nav-link ${isActive(
-                            "/admin/books"
-                        )}`}
-                    >
-
-                        <span>
-                            📚
-                        </span>
-
-                        Manage Books
-
-                    </Link>
-
+                    {/* MANAGE SEATS */}
 
                     <Link
                         to="/admin/seats"
@@ -468,6 +824,8 @@ function AdminMemberships() {
                     </Link>
 
 
+                    {/* RESERVATIONS */}
+
                     <Link
                         to="/admin/reservations"
                         className={`admin-nav-link ${isActive(
@@ -484,14 +842,14 @@ function AdminMemberships() {
                     </Link>
 
 
-                    {/* =================================================
-                        MANAGEMENT
-                    ================================================= */}
+                    {/* MANAGEMENT */}
 
                     <p className="admin-nav-title second-title">
                         MANAGEMENT
                     </p>
 
+
+                    {/* MEMBERS */}
 
                     <Link
                         to="/admin/members"
@@ -509,6 +867,8 @@ function AdminMemberships() {
                     </Link>
 
 
+                    {/* MEMBERSHIPS */}
+
                     <Link
                         to="/admin/memberships"
                         className={`admin-nav-link ${isActive(
@@ -524,6 +884,8 @@ function AdminMemberships() {
 
                     </Link>
 
+
+                    {/* PAYMENTS */}
 
                     <Link
                         to="/admin/payments"
@@ -541,6 +903,8 @@ function AdminMemberships() {
                     </Link>
 
 
+                    {/* REPORTS */}
+
                     <Link
                         to="/admin/reports"
                         className={`admin-nav-link ${isActive(
@@ -557,14 +921,14 @@ function AdminMemberships() {
                     </Link>
 
 
-                    {/* =================================================
-                        SYSTEM
-                    ================================================= */}
+                    {/* SYSTEM */}
 
                     <p className="admin-nav-title second-title">
                         SYSTEM
                     </p>
 
+
+                    {/* SETTINGS */}
 
                     <Link
                         to="/admin/settings"
@@ -585,15 +949,9 @@ function AdminMemberships() {
                 </nav>
 
 
-                {/* =================================================
-                    SIDEBAR BOTTOM
-                ================================================= */}
+                {/* SIDEBAR BOTTOM */}
 
                 <div className="admin-sidebar-bottom">
-
-
-                    
-
 
                     <button
                         type="button"
@@ -609,9 +967,7 @@ function AdminMemberships() {
 
                     </button>
 
-
                 </div>
-
 
             </aside>
 
@@ -646,6 +1002,8 @@ function AdminMemberships() {
                     <div className="admin-topbar-right">
 
 
+                        {/* NOTIFICATION */}
+
                         <button
                             type="button"
                             className="admin-notification"
@@ -659,32 +1017,34 @@ function AdminMemberships() {
                         </button>
 
 
+                        {/* PROFILE */}
+
                         <div className="admin-profile">
 
-
                             <div className="admin-avatar">
-                                A
+
+                                {adminName
+                                    .charAt(0)
+                                    .toUpperCase()}
+
                             </div>
 
 
                             <div className="admin-profile-info">
 
                                 <strong>
-                                    Administrator
+                                    {adminName}
                                 </strong>
 
                                 <small>
-                                    admin@libraspace.com
+                                    {adminEmail}
                                 </small>
 
                             </div>
 
-
                         </div>
 
-
                     </div>
-
 
                 </header>
 
@@ -723,7 +1083,6 @@ function AdminMemberships() {
 
                     <div className="page-header">
 
-
                         <div>
 
                             <span className="page-label">
@@ -745,7 +1104,6 @@ function AdminMemberships() {
                         <div className="header-icon">
                             🎫
                         </div>
-
 
                     </div>
 
@@ -864,7 +1222,6 @@ function AdminMemberships() {
 
                         </div>
 
-
                     </div>
 
 
@@ -876,7 +1233,6 @@ function AdminMemberships() {
 
 
                         <div className="overview-content">
-
 
                             <div className="overview-icon">
                                 📊
@@ -900,7 +1256,6 @@ function AdminMemberships() {
 
                             </div>
 
-
                         </div>
 
 
@@ -909,17 +1264,9 @@ function AdminMemberships() {
                             <strong>
 
                                 ₹
-                                {memberships
-                                    .reduce(
-                                        (
-                                            total,
-                                            membership
-                                        ) =>
-                                            total +
-                                            membership.amount,
-                                        0
-                                    )
-                                    .toLocaleString("en-IN")}
+                                {totalAmount.toLocaleString(
+                                    "en-IN"
+                                )}
 
                             </strong>
 
@@ -928,7 +1275,6 @@ function AdminMemberships() {
                             </span>
 
                         </div>
-
 
                     </div>
 
@@ -943,7 +1289,6 @@ function AdminMemberships() {
                         {/* PANEL HEADER */}
 
                         <div className="panel-header">
-
 
                             <div>
 
@@ -969,7 +1314,6 @@ function AdminMemberships() {
                                 Records
 
                             </div>
-
 
                         </div>
 
@@ -1040,8 +1384,46 @@ function AdminMemberships() {
 
                             </div>
 
-
                         </div>
+
+
+                        {/* =================================================
+                            ERROR
+                        ================================================= */}
+
+                        {error && (
+
+                            <div
+                                style={{
+                                    padding: "16px",
+                                    marginBottom: "20px",
+                                    borderRadius: "10px",
+                                    background: "#fdf0f0",
+                                    color: "#b45353",
+                                    border: "1px solid #efcccc"
+                                }}
+                            >
+
+                                {error}
+
+                                <button
+                                    type="button"
+                                    onClick={
+                                        loadMemberships
+                                    }
+                                    style={{
+                                        marginLeft: "12px",
+                                        cursor: "pointer"
+                                    }}
+                                >
+
+                                    Retry
+
+                                </button>
+
+                            </div>
+
+                        )}
 
 
                         {/* =================================================
@@ -1049,7 +1431,6 @@ function AdminMemberships() {
                         ================================================= */}
 
                         <div className="membership-table-wrapper">
-
 
                             <table className="membership-table">
 
@@ -1098,13 +1479,47 @@ function AdminMemberships() {
                                 <tbody>
 
 
-                                    {filteredMemberships.length > 0 ? (
+                                    {loading ? (
+
+                                        <tr>
+
+                                            <td
+                                                colSpan="8"
+                                                className="no-results"
+                                            >
+
+                                                <div>
+
+                                                    <span>
+                                                        ⏳
+                                                    </span>
+
+                                                    <h3>
+                                                        Loading memberships...
+                                                    </h3>
+
+                                                    <p>
+                                                        Fetching membership data from MongoDB.
+                                                    </p>
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+
+                                    ) : filteredMemberships.length > 0 ? (
 
                                         filteredMemberships.map(
-                                            (membership) => (
+                                            (
+                                                membership
+                                            ) => (
 
                                                 <tr
-                                                    key={membership.id}
+                                                    key={
+                                                        membership._id ||
+                                                        membership.id
+                                                    }
                                                 >
 
 
@@ -1113,7 +1528,6 @@ function AdminMemberships() {
                                                     <td>
 
                                                         <div className="membership-id">
-
 
                                                             <div className="membership-id-icon">
                                                                 🎫
@@ -1132,7 +1546,6 @@ function AdminMemberships() {
 
                                                             </div>
 
-
                                                         </div>
 
                                                     </td>
@@ -1144,10 +1557,12 @@ function AdminMemberships() {
 
                                                         <div className="member-info">
 
-
                                                             <div className="member-avatar">
 
-                                                                {membership.memberName
+                                                                {String(
+                                                                    membership.memberName ||
+                                                                    "M"
+                                                                )
                                                                     .charAt(0)
                                                                     .toUpperCase()}
 
@@ -1165,7 +1580,6 @@ function AdminMemberships() {
                                                                 </span>
 
                                                             </div>
-
 
                                                         </div>
 
@@ -1208,7 +1622,10 @@ function AdminMemberships() {
                                                         <strong className="amount">
 
                                                             ₹
-                                                            {membership.amount.toLocaleString(
+                                                            {Number(
+                                                                membership.amount ||
+                                                                0
+                                                            ).toLocaleString(
                                                                 "en-IN"
                                                             )}
 
@@ -1294,7 +1711,7 @@ function AdminMemberships() {
                                                                     title="Renew Membership"
                                                                     onClick={() =>
                                                                         handleRenew(
-                                                                            membership.id
+                                                                            membership
                                                                         )
                                                                     }
                                                                 >
@@ -1305,11 +1722,9 @@ function AdminMemberships() {
 
                                                             )}
 
-
                                                         </div>
 
                                                     </td>
-
 
                                                 </tr>
 
@@ -1318,9 +1733,6 @@ function AdminMemberships() {
                                         )
 
                                     ) : (
-
-
-                                        /* NO RESULTS */
 
                                         <tr>
 
@@ -1352,15 +1764,11 @@ function AdminMemberships() {
 
                                     )}
 
-
                                 </tbody>
-
 
                             </table>
 
-
                         </div>
-
 
                     </div>
 
@@ -1370,7 +1778,6 @@ function AdminMemberships() {
                     ================================================= */}
 
                     <div className="membership-tips">
-
 
                         <div className="tip-icon">
                             💡
@@ -1391,9 +1798,7 @@ function AdminMemberships() {
 
                         </div>
 
-
                     </div>
-
 
                 </section>
 
@@ -1407,10 +1812,11 @@ function AdminMemberships() {
                     <div
                         className="membership-modal-overlay"
                         onClick={() =>
-                            setSelectedMembership(null)
+                            setSelectedMembership(
+                                null
+                            )
                         }
                     >
-
 
                         <div
                             className="membership-modal"
@@ -1423,7 +1829,6 @@ function AdminMemberships() {
                             {/* MODAL HEADER */}
 
                             <div className="modal-header">
-
 
                                 <div>
 
@@ -1442,14 +1847,15 @@ function AdminMemberships() {
                                     type="button"
                                     className="modal-close"
                                     onClick={() =>
-                                        setSelectedMembership(null)
+                                        setSelectedMembership(
+                                            null
+                                        )
                                     }
                                 >
 
                                     ×
 
                                 </button>
-
 
                             </div>
 
@@ -1458,10 +1864,12 @@ function AdminMemberships() {
 
                             <div className="modal-member">
 
-
                                 <div className="modal-avatar">
 
-                                    {selectedMembership.memberName
+                                    {String(
+                                        selectedMembership.memberName ||
+                                        "M"
+                                    )
                                         .charAt(0)
                                         .toUpperCase()}
 
@@ -1479,7 +1887,6 @@ function AdminMemberships() {
                                     </p>
 
                                 </div>
-
 
                             </div>
 
@@ -1518,14 +1925,30 @@ function AdminMemberships() {
                                 <div className="detail-item">
 
                                     <span>
-                                        Amount Paid
+                                        Amount
                                     </span>
 
                                     <strong>
                                         ₹
-                                        {selectedMembership.amount.toLocaleString(
+                                        {Number(
+                                            selectedMembership.amount ||
+                                            0
+                                        ).toLocaleString(
                                             "en-IN"
                                         )}
+                                    </strong>
+
+                                </div>
+
+
+                                <div className="detail-item">
+
+                                    <span>
+                                        Membership Type
+                                    </span>
+
+                                    <strong>
+                                        {selectedMembership.duration}
                                     </strong>
 
                                 </div>
@@ -1581,7 +2004,6 @@ function AdminMemberships() {
 
                                 </div>
 
-
                             </div>
 
 
@@ -1598,7 +2020,7 @@ function AdminMemberships() {
                                         className="renew-membership-btn"
                                         onClick={() =>
                                             handleRenew(
-                                                selectedMembership.id
+                                                selectedMembership
                                             )
                                         }
                                     >
@@ -1616,7 +2038,9 @@ function AdminMemberships() {
                                     type="button"
                                     className="close-modal-btn"
                                     onClick={() =>
-                                        setSelectedMembership(null)
+                                        setSelectedMembership(
+                                            null
+                                        )
                                     }
                                 >
 
@@ -1624,17 +2048,14 @@ function AdminMemberships() {
 
                                 </button>
 
-
                             </div>
 
 
                         </div>
 
-
                     </div>
 
                 )}
-
 
             </main>
 
