@@ -14,128 +14,79 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
-
 // =========================================================
 // HELPER - GET DURATION DAYS
 // =========================================================
 
 const getDurationDays = (duration) => {
-
-    if (
-        duration === undefined ||
-        duration === null
-    ) {
+    if (duration === undefined || duration === null) {
         return 30;
     }
 
-    const value =
-        String(duration)
-            .trim()
-            .toLowerCase();
+    const value = String(duration).trim().toLowerCase();
 
-    const match =
-        value.match(/\d+/);
+    const match = value.match(/\d+/);
 
     if (!match) {
         return 30;
     }
 
-    const number =
-        Number(match[0]);
+    const number = Number(match[0]);
 
-    if (
-        !Number.isFinite(number) ||
-        number <= 0
-    ) {
+    if (!Number.isFinite(number) || number <= 0) {
         return 30;
     }
 
-    if (
-        value.includes("year") ||
-        value.includes("years")
-    ) {
+    if (value.includes("year")) {
         return number * 365;
     }
 
-    if (
-        value.includes("month") ||
-        value.includes("months")
-    ) {
+    if (value.includes("month")) {
         return number * 30;
     }
 
-    if (
-        value.includes("week") ||
-        value.includes("weeks")
-    ) {
+    if (value.includes("week")) {
         return number * 7;
     }
 
     return number;
 };
 
-
 // =========================================================
 // GET MY PAYMENTS
-// =========================================================
 // GET /api/payments/my
 // =========================================================
 
-const getMyPayments = async (
-    req,
-    res
-) => {
-
+const getMyPayments = async (req, res) => {
     try {
-
-        const payments =
-            await Payment.find({
-                user: req.user.id
-            })
-                .populate("membership")
-                .populate("planId")
-                .sort({
-                    paymentDate: -1
-                });
+        const payments = await Payment.find({
+            user: req.user.id
+        })
+            .populate("membership")
+            .populate("planId")
+            .sort({ paymentDate: -1 });
 
         return res.status(200).json({
-
             success: true,
-
             payments
         });
-
     } catch (error) {
-
-        console.error(
-            "Get payments error:",
-            error
-        );
+        console.error("Get payments error:", error);
 
         return res.status(500).json({
-
             success: false,
-
-            message:
-                "Server error while fetching payment history"
+            message: "Server error while fetching payment history"
         });
     }
 };
 
-
 // =========================================================
 // CREATE RAZORPAY ORDER
-// =========================================================
 // POST /api/payments/create-order
 // =========================================================
 
-const createRazorpayOrder = async (
-    req,
-    res
-) => {
-
+const createRazorpayOrder = async (req, res) => {
     try {
-
         const {
             amount,
             description,
@@ -144,309 +95,221 @@ const createRazorpayOrder = async (
             planId
         } = req.body;
 
-
-        // =================================================
-        // VALIDATE AMOUNT
-        // =================================================
-
-        const numericAmount =
-            Number(amount);
-
-
-        if (
-            !Number.isFinite(
-                numericAmount
-            ) ||
-            numericAmount <= 0
-        ) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "A valid payment amount is required."
-            });
-        }
-
-
-        // =================================================
-        // RAZORPAY CONFIGURATION
-        // =================================================
+        // -------------------------------------------------
+        // CHECK RAZORPAY CONFIGURATION
+        // -------------------------------------------------
 
         if (
             !process.env.RAZORPAY_KEY_ID ||
             !process.env.RAZORPAY_KEY_SECRET
         ) {
-
             return res.status(500).json({
-
                 success: false,
-
-                message:
-                    "Razorpay is not configured on the server."
+                message: "Razorpay is not configured on the server."
             });
         }
 
+        // -------------------------------------------------
+        // VALIDATE AMOUNT
+        // -------------------------------------------------
 
-        // =================================================
-        // VERIFY PLAN
-        // =================================================
+        const numericAmount = Number(amount);
+
+        if (
+            !Number.isFinite(numericAmount) ||
+            numericAmount <= 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "A valid payment amount is required."
+            });
+        }
+
+        // -------------------------------------------------
+        // FIND AND VERIFY MEMBERSHIP PLAN
+        // -------------------------------------------------
 
         let selectedPlan = null;
 
-
         if (planId) {
-
-            selectedPlan =
-                await MembershipPlan.findById(
-                    planId
-                );
-
+            selectedPlan = await MembershipPlan.findById(planId);
 
             if (!selectedPlan) {
-
                 return res.status(404).json({
-
                     success: false,
-
-                    message:
-                        "Selected membership plan was not found."
+                    message: "Selected membership plan was not found."
                 });
             }
 
+            if (!selectedPlan.active) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Selected membership plan is not active."
+                });
+            }
 
-            /*
-            Use the database plan price
-            rather than trusting the frontend amount.
-            */
+            const planPrice = Number(selectedPlan.price);
 
             if (
-                selectedPlan.price !==
-                undefined
+                !Number.isFinite(planPrice) ||
+                planPrice <= 0
             ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Selected membership plan has an invalid price."
+                });
+            }
 
-                const planPrice =
-                    Number(
-                        selectedPlan.price
-                    );
+            // IMPORTANT:
+            // Amount from frontend must match database price.
 
-
-                if (
-                    !Number.isFinite(
-                        planPrice
-                    ) ||
-                    planPrice <= 0
-                ) {
-
-                    return res.status(400).json({
-
-                        success: false,
-
-                        message:
-                            "Selected membership plan has an invalid price."
-                    });
-                }
-
-
-                /*
-                Use database amount.
-                */
-
-                if (
-                    Math.round(
-                        numericAmount * 100
-                    ) !==
-                    Math.round(
-                        planPrice * 100
-                    )
-                ) {
-
-                    return res.status(400).json({
-
-                        success: false,
-
-                        message:
-                            "Payment amount does not match the selected membership plan."
-                    });
-                }
+            if (
+                Math.round(numericAmount * 100) !==
+                Math.round(planPrice * 100)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Payment amount does not match the selected membership plan."
+                });
             }
         }
 
-
-        // =================================================
+        // -------------------------------------------------
         // VERIFY EXISTING MEMBERSHIP
-        // =================================================
+        // -------------------------------------------------
 
-        let membershipRecord =
-            null;
-
+        let membershipRecord = null;
 
         if (membership) {
-
-            membershipRecord =
-                await Membership.findOne({
-
-                    _id:
-                        membership,
-
-                    user:
-                        req.user.id
-                });
-
+            membershipRecord = await Membership.findOne({
+                _id: membership,
+                user: req.user.id
+            });
 
             if (!membershipRecord) {
-
                 return res.status(404).json({
-
                     success: false,
-
-                    message:
-                        "Membership was not found for this account."
+                    message: "Membership was not found for this account."
                 });
             }
         }
 
+        // -------------------------------------------------
+        // CONVERT INR TO PAISE
+        // -------------------------------------------------
 
-        // =================================================
-        // CREATE RAZORPAY ORDER
-        // =================================================
+        const amountInPaise = Math.round(
+            numericAmount * 100
+        );
 
-        const amountInPaise =
-            Math.round(
-                numericAmount * 100
-            );
-
+        // -------------------------------------------------
+        // CREATE UNIQUE RECEIPT
+        // -------------------------------------------------
 
         const receipt =
-            `LIBRA_${Date.now()}_${String(
-                req.user.id
-            ).slice(-6)}`;
+            `LIBRA_${Date.now()}_${String(req.user.id).slice(-6)}`;
 
+        // -------------------------------------------------
+        // CREATE RAZORPAY ORDER
+        // -------------------------------------------------
 
-        const order =
-            await razorpay.orders.create({
+        const order = await razorpay.orders.create({
+            amount: amountInPaise,
+            currency: "INR",
+            receipt,
 
-                amount:
-                    amountInPaise,
+            notes: {
+                userId: String(req.user.id),
 
-                currency:
-                    "INR",
+                membershipId: membership
+                    ? String(membership)
+                    : "",
 
-                receipt,
-
-                notes: {
-
-                    userId:
-                        String(
-                            req.user.id
-                        ),
-
-                    membershipId:
-                        membership
-                            ? String(
-                                  membership
-                              )
-                            : "",
-
-                    planId:
-                        planId
-                            ? String(
-                                  planId
-                              )
-                            : "",
-
-                    description:
-                        description ||
-                        "LibraSpace Membership Payment"
-                }
-            });
-
-
-        // =================================================
-        // SAVE PENDING PAYMENT
-        // =================================================
-
-        const payment =
-            await Payment.create({
-
-                user:
-                    req.user.id,
-
-                transactionId:
-                    order.id,
-
-                razorpayOrderId:
-                    order.id,
-
-                planId:
-                    planId || null,
+                planId: planId
+                    ? String(planId)
+                    : "",
 
                 description:
                     description ||
-                    "LibraSpace Membership Payment",
+                    "LibraSpace Membership Payment"
+            }
+        });
 
-                duration:
-                    duration ||
-                    selectedPlan
-                        ? `${selectedPlan.durationDays} days`
-                        : "30 days",
+        // -------------------------------------------------
+        // PAYMENT DURATION
+        // -------------------------------------------------
 
-                method:
-                    "Razorpay",
+        const paymentDuration =
+            duration ||
+            (
+                selectedPlan
+                    ? `${selectedPlan.durationDays} days`
+                    : "30 days"
+            );
 
-                amount:
-                    numericAmount,
+        // -------------------------------------------------
+        // SAVE PENDING PAYMENT
+        // -------------------------------------------------
 
-                status:
-                    "Pending",
+        const payment = await Payment.create({
+            user: req.user.id,
 
-                paymentDate:
-                    new Date(),
+            transactionId: order.id,
 
-                membership:
-                    membership || null
-            });
+            razorpayOrderId: order.id,
 
+            razorpayPaymentId: "",
 
-        // =================================================
-        // RESPONSE
-        // =================================================
+            razorpaySignature: "",
+
+            planId: planId || null,
+
+            description:
+                description ||
+                "LibraSpace Membership Payment",
+
+            duration: paymentDuration,
+
+            method: "Razorpay",
+
+            amount: numericAmount,
+
+            status: "Pending",
+
+            paymentDate: new Date(),
+
+            membership: membership || null
+        });
+
+        // -------------------------------------------------
+        // SEND ORDER TO FRONTEND
+        // -------------------------------------------------
 
         return res.status(201).json({
-
             success: true,
 
-            message:
-                "Razorpay order created successfully.",
+            message: "Razorpay order created successfully.",
 
-            keyId:
-                process.env.RAZORPAY_KEY_ID,
+            keyId: process.env.RAZORPAY_KEY_ID,
 
-            orderId:
-                order.id,
+            orderId: order.id,
 
-            amount:
-                order.amount,
+            amount: order.amount,
 
-            currency:
-                order.currency,
+            currency: order.currency,
 
-            paymentId:
-                payment._id
+            paymentId: payment._id
         });
 
     } catch (error) {
-
         console.error(
             "Create Razorpay order error:",
             error
         );
 
         return res.status(500).json({
-
             success: false,
-
             message:
                 error.error?.description ||
                 error.message ||
@@ -455,153 +318,120 @@ const createRazorpayOrder = async (
     }
 };
 
-
 // =========================================================
 // VERIFY RAZORPAY PAYMENT
-// =========================================================
 // POST /api/payments/verify
 // =========================================================
 
-const verifyRazorpayPayment = async (
-    req,
-    res
-) => {
-
+const verifyRazorpayPayment = async (req, res) => {
     try {
-
         const {
             razorpay_order_id,
             razorpay_payment_id,
             razorpay_signature
         } = req.body;
 
-
-        // =================================================
+        // -------------------------------------------------
         // VALIDATE RESPONSE
-        // =================================================
+        // -------------------------------------------------
 
         if (
             !razorpay_order_id ||
             !razorpay_payment_id ||
             !razorpay_signature
         ) {
-
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Razorpay payment verification data is incomplete."
             });
         }
 
+        // -------------------------------------------------
+        // CHECK SECRET
+        // -------------------------------------------------
 
-        // =================================================
+        if (!process.env.RAZORPAY_KEY_SECRET) {
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Razorpay secret key is not configured."
+            });
+        }
+
+        // -------------------------------------------------
         // FIND PAYMENT
-        // =================================================
+        // -------------------------------------------------
 
-        const payment =
-            await Payment.findOne({
-
-                user:
-                    req.user.id,
-
-                razorpayOrderId:
-                    razorpay_order_id
-
-            })
-                .populate("planId")
-                .populate("membership");
-
+        const payment = await Payment.findOne({
+            user: req.user.id,
+            razorpayOrderId: razorpay_order_id
+        })
+            .populate("planId")
+            .populate("membership");
 
         if (!payment) {
-
             return res.status(404).json({
-
                 success: false,
-
-                message:
-                    "Payment order was not found."
+                message: "Payment order was not found."
             });
         }
 
+        // -------------------------------------------------
+        // PREVENT DOUBLE VERIFICATION
+        // -------------------------------------------------
 
-        // =================================================
-        // ALREADY VERIFIED
-        // =================================================
-
-        if (
-            payment.status ===
-            "Successful"
-        ) {
-
+        if (payment.status === "Successful") {
             return res.status(200).json({
-
                 success: true,
-
-                message:
-                    "Payment has already been verified.",
-
+                message: "Payment has already been verified.",
                 payment,
-
-                membership:
-                    payment.membership
+                membership: payment.membership
             });
         }
 
+        // -------------------------------------------------
+        // GENERATE EXPECTED SIGNATURE
+        // -------------------------------------------------
 
-        // =================================================
-        // GENERATE SIGNATURE
-        // =================================================
+        const generatedSignature = crypto
+            .createHmac(
+                "sha256",
+                process.env.RAZORPAY_KEY_SECRET
+            )
+            .update(
+                `${razorpay_order_id}|${razorpay_payment_id}`
+            )
+            .digest("hex");
 
-        const generatedSignature =
-            crypto
-                .createHmac(
-                    "sha256",
-                    process.env.RAZORPAY_KEY_SECRET
-                )
-                .update(
-                    `${razorpay_order_id}|${razorpay_payment_id}`
-                )
-                .digest("hex");
-
-
-        // =================================================
+        // -------------------------------------------------
         // SAFE SIGNATURE COMPARISON
-        // =================================================
+        // -------------------------------------------------
 
-        const expectedBuffer =
-            Buffer.from(
-                generatedSignature,
-                "utf8"
-            );
+        const expectedBuffer = Buffer.from(
+            generatedSignature,
+            "utf8"
+        );
 
-        const receivedBuffer =
-            Buffer.from(
-                razorpay_signature,
-                "utf8"
-            );
-
+        const receivedBuffer = Buffer.from(
+            razorpay_signature,
+            "utf8"
+        );
 
         if (
             expectedBuffer.length !==
             receivedBuffer.length
         ) {
-
-            payment.status =
-                "Failed";
+            payment.status = "Failed";
 
             await payment.save();
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Payment signature verification failed."
             });
         }
-
 
         const signatureMatches =
             crypto.timingSafeEqual(
@@ -609,30 +439,23 @@ const verifyRazorpayPayment = async (
                 receivedBuffer
             );
 
-
         if (!signatureMatches) {
-
-            payment.status =
-                "Failed";
+            payment.status = "Failed";
 
             await payment.save();
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Payment signature verification failed."
             });
         }
 
+        // -------------------------------------------------
+        // PAYMENT IS VERIFIED
+        // -------------------------------------------------
 
-        // =================================================
-        // PAYMENT SUCCESSFUL
-        // =================================================
-
-        payment.status =
-            "Successful";
+        payment.status = "Successful";
 
         payment.razorpayPaymentId =
             razorpay_payment_id;
@@ -640,122 +463,97 @@ const verifyRazorpayPayment = async (
         payment.razorpaySignature =
             razorpay_signature;
 
-        payment.paymentDate =
-            new Date();
+        payment.paymentDate = new Date();
 
+        // -------------------------------------------------
+        // GET MEMBERSHIP PLAN
+        // -------------------------------------------------
 
-        // =================================================
-        // GET PLAN
-        // =================================================
-
-        let plan =
-            payment.planId;
-
+        let plan = payment.planId;
 
         if (
             plan &&
             typeof plan === "object"
         ) {
-
             // Already populated.
-
-        } else if (
-            payment.planId
-        ) {
-
-            plan =
-                await MembershipPlan.findById(
-                    payment.planId
-                );
+        } else if (payment.planId) {
+            plan = await MembershipPlan.findById(
+                payment.planId
+            );
         }
 
-
         if (!plan) {
-
-            payment.status =
-                "Failed";
+            payment.status = "Failed";
 
             await payment.save();
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Membership plan could not be found."
             });
         }
 
+        // -------------------------------------------------
+        // GET MEMBERSHIP
+        // -------------------------------------------------
 
-        // =================================================
-        // CHECK EXISTING MEMBERSHIP
-        // =================================================
-
-        let membership =
-            payment.membership;
-
+        let membership = payment.membership;
 
         // =================================================
         // NEW MEMBERSHIP
         // =================================================
 
         if (!membership) {
+            const now = new Date();
 
-            const now =
-                new Date();
+            const durationDays = Number(
+                plan.durationDays ||
+                getDurationDays(payment.duration)
+            );
 
+            if (
+                !Number.isFinite(durationDays) ||
+                durationDays <= 0
+            ) {
+                payment.status = "Failed";
 
-            const durationDays =
-                Number(
-                    plan.durationDays ||
-                    getDurationDays(
-                        payment.duration
-                    )
-                );
+                await payment.save();
 
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Membership duration is invalid."
+                });
+            }
 
-            const expiryDate =
-                new Date(now);
-
+            const expiryDate = new Date(now);
 
             expiryDate.setDate(
                 expiryDate.getDate() +
                 durationDays
             );
 
+            membership = await Membership.create({
+                user: req.user.id,
 
-            membership =
-                await Membership.create({
+                planName: plan.name,
 
-                    user:
-                        req.user.id,
+                planType: plan.planType,
 
-                    planName:
-                        plan.name,
+                monthlyFee: Number(
+                    plan.price || 0
+                ),
 
-                    planType:
-                        plan.planType,
+                startDate: now,
 
-                    monthlyFee:
-                        Number(
-                            plan.price || 0
-                        ),
+                expiryDate,
 
-                    startDate:
-                        now,
-
-                    expiryDate,
-
-                    status:
-                        "active"
-                });
-
-
-            // Attach membership to payment
+                status: "active"
+            });
 
             payment.membership =
                 membership._id;
-
 
         } else {
 
@@ -763,53 +561,66 @@ const verifyRazorpayPayment = async (
             // EXISTING MEMBERSHIP RENEWAL
             // =================================================
 
-            const now =
-                new Date();
-
+            const now = new Date();
 
             const currentExpiry =
                 membership.expiryDate
                     ? new Date(
-                          membership.expiryDate
-                      )
+                        membership.expiryDate
+                    )
                     : null;
 
+            // -------------------------------------------------
+            // ACTIVE MEMBERSHIP
+            // Extend from current expiry.
+            //
+            // EXPIRED MEMBERSHIP
+            // Start from today.
+            // -------------------------------------------------
 
-            let renewalStart =
-                now;
-
+            let renewalStart = now;
 
             if (
                 currentExpiry &&
-                currentExpiry >
-                    now
+                !Number.isNaN(
+                    currentExpiry.getTime()
+                ) &&
+                currentExpiry > now
             ) {
-
-                renewalStart =
-                    currentExpiry;
+                renewalStart = currentExpiry;
             }
 
+            const durationDays = Number(
+                plan.durationDays ||
+                getDurationDays(payment.duration)
+            );
 
-            const durationDays =
-                Number(
-                    plan.durationDays ||
-                    getDurationDays(
-                        payment.duration
-                    )
-                );
+            if (
+                !Number.isFinite(durationDays) ||
+                durationDays <= 0
+            ) {
+                payment.status = "Failed";
 
+                await payment.save();
+
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Membership duration is invalid."
+                });
+            }
 
             const newExpiryDate =
-                new Date(
-                    renewalStart
-                );
-
+                new Date(renewalStart);
 
             newExpiryDate.setDate(
                 newExpiryDate.getDate() +
                 durationDays
             );
 
+            // -------------------------------------------------
+            // UPDATE MEMBERSHIP
+            // -------------------------------------------------
 
             membership.planName =
                 plan.name;
@@ -818,9 +629,7 @@ const verifyRazorpayPayment = async (
                 plan.planType;
 
             membership.monthlyFee =
-                Number(
-                    plan.price || 0
-                );
+                Number(plan.price || 0);
 
             membership.expiryDate =
                 newExpiryDate;
@@ -828,24 +637,21 @@ const verifyRazorpayPayment = async (
             membership.status =
                 "active";
 
-
             await membership.save();
 
             payment.membership =
                 membership._id;
         }
 
-
-        // =================================================
-        // SAVE SUCCESSFUL PAYMENT
-        // =================================================
+        // -------------------------------------------------
+        // SAVE PAYMENT
+        // -------------------------------------------------
 
         await payment.save();
 
-
-        // =================================================
+        // -------------------------------------------------
         // GET COMPLETE PAYMENT
-        // =================================================
+        // -------------------------------------------------
 
         const completedPayment =
             await Payment.findById(
@@ -854,37 +660,29 @@ const verifyRazorpayPayment = async (
                 .populate("membership")
                 .populate("planId");
 
-
-        // =================================================
+        // -------------------------------------------------
         // SUCCESS RESPONSE
-        // =================================================
+        // -------------------------------------------------
 
         return res.status(200).json({
-
             success: true,
 
             message:
-                payment.membership
-                    ? "Payment verified and membership updated successfully."
-                    : "Payment verified and membership created successfully.",
+                "Payment verified and membership updated successfully.",
 
-            payment:
-                completedPayment,
+            payment: completedPayment,
 
             membership
         });
 
     } catch (error) {
-
         console.error(
             "Verify Razorpay payment error:",
             error
         );
 
         return res.status(500).json({
-
             success: false,
-
             message:
                 error.message ||
                 "Server error while verifying payment."
@@ -892,78 +690,50 @@ const verifyRazorpayPayment = async (
     }
 };
 
-
 // =========================================================
 // MARK PAYMENT FAILED
-// =========================================================
 // POST /api/payments/failed
 // =========================================================
 
-const markPaymentFailed = async (
-    req,
-    res
-) => {
-
+const markPaymentFailed = async (req, res) => {
     try {
-
         const {
             razorpayOrderId,
             razorpayPaymentId
         } = req.body;
 
-
         if (!razorpayOrderId) {
-
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Razorpay order ID is required."
             });
         }
 
-
         const payment =
             await Payment.findOne({
-
-                user:
-                    req.user.id,
-
+                user: req.user.id,
                 razorpayOrderId
             });
 
-
         if (!payment) {
-
             return res.status(404).json({
-
                 success: false,
-
                 message:
                     "Payment order was not found."
             });
         }
 
+        payment.status = "Failed";
 
-        payment.status =
-            "Failed";
-
-
-        if (
-            razorpayPaymentId
-        ) {
-
+        if (razorpayPaymentId) {
             payment.razorpayPaymentId =
                 razorpayPaymentId;
         }
 
-
         await payment.save();
 
-
         return res.status(200).json({
-
             success: true,
 
             message:
@@ -973,34 +743,26 @@ const markPaymentFailed = async (
         });
 
     } catch (error) {
-
         console.error(
             "Mark payment failed error:",
             error
         );
 
         return res.status(500).json({
-
             success: false,
-
             message:
                 "Server error while updating failed payment."
         });
     }
 };
 
-
 // =========================================================
 // CREATE MANUAL PAYMENT
+// POST /api/payments
 // =========================================================
 
-const createPayment = async (
-    req,
-    res
-) => {
-
+const createPayment = async (req, res) => {
     try {
-
         const {
             transactionId,
             description,
@@ -1013,47 +775,35 @@ const createPayment = async (
             planId
         } = req.body;
 
-
         if (
             !transactionId ||
             !description ||
             !duration ||
             amount === undefined
         ) {
-
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Transaction ID, description, duration and amount are required"
             });
         }
-
 
         const existingPayment =
             await Payment.findOne({
                 transactionId
             });
 
-
         if (existingPayment) {
-
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Payment with this transaction ID already exists"
             });
         }
 
-
         const payment =
             await Payment.create({
-
-                user:
-                    req.user.id,
+                user: req.user.id,
 
                 transactionId,
 
@@ -1062,34 +812,26 @@ const createPayment = async (
                 duration,
 
                 method:
-                    method ||
-                    "Razorpay",
+                    method || "Razorpay",
 
-                amount,
+                amount: Number(amount),
 
                 status:
-                    status ||
-                    "Successful",
+                    status || "Successful",
 
                 paymentDate:
                     paymentDate
-                        ? new Date(
-                              paymentDate
-                          )
+                        ? new Date(paymentDate)
                         : new Date(),
 
                 membership:
-                    membership ||
-                    null,
+                    membership || null,
 
                 planId:
-                    planId ||
-                    null
+                    planId || null
             });
 
-
         return res.status(201).json({
-
             success: true,
 
             message:
@@ -1099,107 +841,71 @@ const createPayment = async (
         });
 
     } catch (error) {
-
         console.error(
             "Create payment error:",
             error
         );
 
         return res.status(500).json({
-
             success: false,
-
             message:
                 "Server error while creating payment"
         });
     }
 };
 
-
 // =========================================================
 // GET SINGLE PAYMENT
-// =========================================================
 // GET /api/payments/:id
 // =========================================================
 
-const getPaymentById = async (
-    req,
-    res
-) => {
-
+const getPaymentById = async (req, res) => {
     try {
-
-        const {
-            id
-        } = req.params;
-
+        const { id } = req.params;
 
         const payment =
             await Payment.findOne({
-
-                _id:
-                    id,
-
-                user:
-                    req.user.id
-
+                _id: id,
+                user: req.user.id
             })
                 .populate("membership")
                 .populate("planId");
 
-
         if (!payment) {
-
             return res.status(404).json({
-
                 success: false,
-
-                message:
-                    "Payment not found"
+                message: "Payment not found"
             });
         }
 
-
         return res.status(200).json({
-
             success: true,
-
             payment
         });
 
     } catch (error) {
-
         console.error(
             "Get payment error:",
             error
         );
 
         return res.status(500).json({
-
             success: false,
-
             message:
                 "Server error while fetching payment"
         });
     }
 };
 
-
 // =========================================================
 // EXPORTS
 // =========================================================
 
 module.exports = {
-
     getMyPayments,
-
     createPayment,
-
     getPaymentById,
-
     createRazorpayOrder,
-
     verifyRazorpayPayment,
-
     markPaymentFailed
 };

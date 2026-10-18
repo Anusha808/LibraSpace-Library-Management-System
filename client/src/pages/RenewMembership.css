@@ -1,33 +1,229 @@
-* {
+/* ============================================================
+   LIBRASPACE - RENEW MEMBERSHIP
+   THEME: TEAL + TURQUOISE + WHITE + SOFT GOLD
+   STYLE: MODERN • CLEAN • PREMIUM • LIBRARY
+   ============================================================ */
+
+
+/* ============================================================
+   COLOR SYSTEM
+   ============================================================ */
+
+:root {
+
+    --renew-primary: #2589A5;
+    --renew-primary-dark: #176B87;
+    --renew-primary-light: #3BA7B8;
+
+    --renew-accent: #7CCED5;
+    --renew-gold: #D6B56A;
+
+    --renew-background: #F4F9FA;
+    --renew-background-soft: #EAF5F7;
+
+    --renew-card: #FFFFFF;
+
+    --renew-text: #294653;
+    --renew-text-light: #66808B;
+    --renew-text-muted: #91A5AD;
+
+    --renew-border: #D8E8EC;
+    --renew-border-light: #E8F1F3;
+
+    --renew-success: #70A88A;
+    --renew-success-light: #EDF7F1;
+
+    --renew-danger: #C97878;
+    --renew-danger-light: #FBEFEF;
+
+    --renew-warning: #C99A58;
+    --renew-warning-light: #FCF5E8;
+
+    --renew-shadow:
+        0 8px 25px rgba(41, 70, 83, 0.06);
+
+    --renew-shadow-hover:
+        0 16px 35px rgba(41, 70, 83, 0.12);
+
+    --renew-radius: 14px;
+}
+
+
+/* ============================================================
+   RESET
+   ============================================================ */
+
+.renew-page *,
+.renew-page *::before,
+.renew-page *::after {
     box-sizing: border-box;
 }
 
 .renew-page {
     min-height: 100vh;
-
     display: flex;
 
-    background: #f5f7f6;
+    margin: 0;
+    padding: 0;
 
-    color: #263f38;
+    background:
+        linear-gradient(
+            135deg,
+            #F8FBFC 0%,
+            #F3F8FA 50%,
+            #F9FCFC 100%
+        );
+
+    color: var(--renew-text);
 
     font-family:
         "Inter",
         "Segoe UI",
         Arial,
         sans-serif;
+
+    font-size: 15px;
+
+    -webkit-font-smoothing: antialiased;
+
+    overflow-x: hidden;
+}
+
+.renew-page a {
+    text-decoration: none;
+}
+
+.renew-page button,
+.renew-page input,
+.renew-page select,
+.renew-page textarea {
+    font-family: inherit;
+}
+
+.renew-page button {
+    border: 0;
 }
 
 
-/* =====================================================
+/* ============================================================
+   PAGE ANIMATION
+   ============================================================ */
+
+@keyframes renewPageFade {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes renewSlideLeft {
+
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes renewSlideRight {
+
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes renewFadeUp {
+
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes renewSidebarSlide {
+
+    from {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes renewTopbarDrop {
+
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes renewPulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(112, 168, 138, 0.35);
+    }
+
+    70% {
+        box-shadow:
+            0 0 0 7px rgba(112, 168, 138, 0);
+    }
+}
+
+@keyframes renewButtonPulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 8px 22px rgba(37, 137, 165, 0.22);
+    }
+
+    50% {
+        box-shadow:
+            0 10px 28px rgba(37, 137, 165, 0.34);
+    }
+}
+
+
+/* ============================================================
    SIDEBAR
-===================================================== */
+   ============================================================ */
 
 .renew-sidebar {
+
     position: fixed;
 
-    left: 0;
     top: 0;
+    left: 0;
 
     width: 245px;
     height: 100vh;
@@ -35,27 +231,102 @@
     display: flex;
     flex-direction: column;
 
-    padding: 28px 17px;
+    padding: 26px 15px;
 
-    background: #ffffff;
+    background:
+        linear-gradient(
+            180deg,
+            #176B87 0%,
+            #2589A5 48%,
+            #329CAF 100%
+        );
 
-    border-right: 1px solid #e4ebe7;
+    border-right:
+        1px solid rgba(255, 255, 255, 0.12);
+
+    box-shadow:
+        7px 0 28px rgba(23, 107, 135, 0.16);
+
+    overflow: hidden;
 
     z-index: 100;
+
+    animation:
+        renewSidebarSlide 0.7s ease both;
 }
 
+
+/* ============================================================
+   SIDEBAR DECORATION
+   ============================================================ */
+
+.renew-sidebar::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 230px;
+    height: 230px;
+
+    top: -120px;
+    right: -110px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.075);
+
+    pointer-events: none;
+}
+
+.renew-sidebar::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 190px;
+    height: 190px;
+
+    bottom: -110px;
+    left: -100px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.045);
+
+    pointer-events: none;
+}
+
+
+/* ============================================================
+   SIDEBAR LOGO
+   ============================================================ */
+
 .renew-sidebar-logo {
+
+    position: relative;
+
+    z-index: 2;
+
     display: flex;
     align-items: center;
 
     gap: 12px;
 
-    padding: 5px 10px 30px;
+    padding:
+        5px 10px 28px;
+
+    animation:
+        renewSlideLeft 0.7s ease 0.15s both;
 }
 
 .renew-logo-icon {
-    width: 42px;
-    height: 42px;
+
+    width: 43px;
+    height: 43px;
 
     display: flex;
     align-items: center;
@@ -63,51 +334,113 @@
 
     border-radius: 12px;
 
-    background: #24483f;
+    color: #FFFFFF;
 
-    font-size: 20px;
+    background:
+        rgba(255, 255, 255, 0.15);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.18);
+
+    font-size: 19px;
+
+    box-shadow:
+        0 8px 20px rgba(12, 69, 87, 0.16);
+
+    transition:
+        transform 0.3s ease,
+        background 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
-.renew-sidebar-logo div:last-child {
+.renew-sidebar-logo:hover .renew-logo-icon {
+
+    transform:
+        rotate(-5deg)
+        scale(1.07);
+
+    background:
+        rgba(255, 255, 255, 0.23);
+
+    box-shadow:
+        0 10px 25px rgba(12, 69, 87, 0.22);
+}
+
+.renew-sidebar-logo > div:last-child {
+
     display: flex;
     flex-direction: column;
 
-    gap: 2px;
+    gap: 3px;
 }
 
 .renew-sidebar-logo strong {
-    color: #24483f;
 
-    font-size: 17px;
+    color: #FFFFFF;
+
+    font-size: 18px;
     font-weight: 800;
+
+    letter-spacing: -0.3px;
 }
 
 .renew-sidebar-logo span {
-    color: #9aa49f;
 
-    font-size: 9px;
+    color:
+        rgba(255, 255, 255, 0.70);
+
+    font-size: 11px;
     font-weight: 600;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
 }
+
+
+/* ============================================================
+   SIDEBAR SECTION TITLE
+   ============================================================ */
 
 .renew-menu-title {
-    padding: 18px 12px 9px;
 
-    color: #a1aaa6;
+    position: relative;
 
-    font-size: 9px;
-    font-weight: 800;
+    z-index: 2;
 
-    letter-spacing: 1.3px;
+    padding:
+        18px 13px 10px;
+
+    color:
+        rgba(255, 255, 255, 0.63);
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 1.4px;
+
+    text-transform: uppercase;
 }
 
+
+/* ============================================================
+   SIDEBAR NAVIGATION
+   ============================================================ */
+
 .renew-sidebar-nav {
+
+    position: relative;
+
+    z-index: 2;
+
     display: flex;
     flex-direction: column;
 
-    gap: 4px;
+    gap: 5px;
 }
 
 .renew-sidebar-nav a {
+
     position: relative;
 
     display: flex;
@@ -115,54 +448,181 @@
 
     gap: 13px;
 
-    padding: 12px 13px;
+    padding:
+        13px 14px;
 
-    border-radius: 9px;
+    border-radius: 10px;
 
-    color: #77847e;
+    color:
+        rgba(255, 255, 255, 0.84);
 
-    text-decoration: none;
-
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
 
-    transition: .25s;
+    overflow: hidden;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.renew-sidebar-nav a::after {
+
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    width: 0;
+    height: 100%;
+
+    background:
+        rgba(255, 255, 255, 0.05);
+
+    transition:
+        width 0.3s ease;
 }
 
 .renew-sidebar-nav a:hover {
-    background: #f1f6f3;
 
-    color: #24483f;
+    color: #FFFFFF;
+
+    background:
+        rgba(255, 255, 255, 0.13);
+
+    transform:
+        translateX(4px);
+
+    box-shadow:
+        0 6px 16px rgba(10, 62, 79, 0.10);
+}
+
+.renew-sidebar-nav a:hover::after {
+    width: 100%;
 }
 
 .renew-sidebar-nav a span {
-    width: 22px;
 
-    text-align: center;
+    width: 24px;
+    min-width: 24px;
 
-    font-size: 15px;
+    display: inline-flex;
+    justify-content: center;
+
+    color: inherit;
+
+    font-size: 16px;
+
+    transition:
+        transform 0.25s ease;
 }
 
+.renew-sidebar-nav a:hover span {
+
+    transform:
+        scale(1.12)
+        rotate(-4deg);
+}
+
+
+/* Highlight Membership because this is the renewal page */
+
+.renew-sidebar-nav a[href="/membership"] {
+
+    color: #FFFFFF;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(59, 167, 184, 0.95),
+            rgba(124, 206, 213, 0.72)
+        );
+
+    box-shadow:
+        0 8px 20px rgba(10, 70, 89, 0.18),
+        inset 0 0 0 1px
+        rgba(255, 255, 255, 0.10);
+}
+
+.renew-sidebar-nav a[href="/membership"]::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+
+    top: 7px;
+    bottom: 7px;
+
+    width: 4px;
+
+    border-radius:
+        0 5px 5px 0;
+
+    background:
+        #FFFFFF;
+
+    box-shadow:
+        0 0 12px rgba(255, 255, 255, 0.55);
+}
+
+
+/* ============================================================
+   SIDEBAR BOTTOM
+   ============================================================ */
+
 .renew-sidebar-bottom {
+
+    position: relative;
+
+    z-index: 2;
+
     margin-top: auto;
 }
 
+
+/* ============================================================
+   LIBRARY STATUS
+   ============================================================ */
+
 .renew-library-status {
+
     display: flex;
     align-items: center;
 
     gap: 10px;
 
-    padding: 14px;
+    padding: 13px;
 
     border-radius: 10px;
 
-    background: #f6f9f7;
+    background:
+        rgba(255, 255, 255, 0.10);
 
-    border: 1px solid #e7eeea;
+    border:
+        1px solid rgba(255, 255, 255, 0.11);
+
+    transition:
+        transform 0.25s ease,
+        background 0.25s ease;
+}
+
+.renew-library-status:hover {
+
+    transform:
+        translateY(-2px);
+
+    background:
+        rgba(255, 255, 255, 0.15);
 }
 
 .renew-status-dot {
+
     width: 8px;
     height: 8px;
 
@@ -170,12 +630,18 @@
 
     border-radius: 50%;
 
-    background: #52a36c;
+    background:
+        #D7F0DF;
 
-    box-shadow: 0 0 0 4px #e7f5eb;
+    box-shadow:
+        0 0 10px rgba(215, 240, 223, 0.45);
+
+    animation:
+        renewPulse 2s infinite;
 }
 
-.renew-library-status div {
+.renew-library-status > div {
+
     display: flex;
     flex-direction: column;
 
@@ -183,91 +649,163 @@
 }
 
 .renew-library-status strong {
-    color: #42564e;
 
-    font-size: 10px;
+    color: #FFFFFF;
+
+    font-size: 12px;
 }
 
 .renew-library-status small {
-    color: #99a39e;
 
-    font-size: 8px;
-}
-
-.renew-logout {
-    display: block;
-
-    margin-top: 12px;
-
-    padding: 11px 13px;
-
-    border-radius: 8px;
-
-    color: #8a9691;
-
-    text-decoration: none;
+    color:
+        rgba(255, 255, 255, 0.67);
 
     font-size: 11px;
+}
+
+
+/* ============================================================
+   LOGOUT
+   ============================================================ */
+
+.renew-logout {
+
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    margin-top: 11px;
+
+    padding:
+        11px 13px;
+
+    border-radius: 9px;
+
+    background: transparent;
+
+    color:
+        rgba(255, 255, 255, 0.72);
+
+    font-size: 12px;
     font-weight: 600;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        transform 0.25s ease;
 }
 
 .renew-logout:hover {
-    background: #f4f7f5;
 
-    color: #24483f;
+    color: #FFFFFF;
+
+    background:
+        rgba(255, 255, 255, 0.09);
+
+    transform:
+        translateX(3px);
 }
 
 
-/* =====================================================
-   CONTENT
-===================================================== */
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
 
 .renew-content {
-    width: calc(100% - 245px);
 
-    margin-left: 245px;
+    width:
+        calc(100% - 245px);
+
+    margin-left:
+        245px;
 
     min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
 }
 
 
-/* =====================================================
+/* ============================================================
    TOPBAR
-===================================================== */
+   ============================================================ */
 
 .renew-topbar {
+
     height: 82px;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    padding: 0 42px;
+    padding:
+        0 42px;
 
-    background: #ffffff;
+    background:
+        rgba(255, 255, 255, 0.96);
 
-    border-bottom: 1px solid #e6ece9;
+    border-bottom:
+        1px solid var(--renew-border);
+
+    backdrop-filter:
+        blur(12px);
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 50;
+
+    animation:
+        renewTopbarDrop 0.6s ease both;
 }
 
 .renew-top-label {
-    color: #87a295;
 
-    font-size: 8px;
-    font-weight: 800;
+    display: block;
+
+    color:
+        var(--renew-text-muted);
+
+    font-size: 11px;
+
+    font-weight: 700;
 
     letter-spacing: 1.4px;
+
+    text-transform: uppercase;
+
+    margin-bottom: 3px;
 }
 
 .renew-topbar h1 {
-    margin: 4px 0 0;
 
-    color: #263f38;
+    margin: 0;
 
-    font-size: 19px;
+    color:
+        var(--renew-text);
+
+    font-size: 21px;
+
     font-weight: 750;
+
+    letter-spacing: -0.3px;
 }
 
+
+/* ============================================================
+   USER PROFILE
+   ============================================================ */
+
 .renew-user {
+
     display: flex;
     align-items: center;
 
@@ -275,12 +813,20 @@
 
     color: inherit;
 
-    text-decoration: none;
+    transition:
+        transform 0.25s ease;
+}
+
+.renew-user:hover {
+
+    transform:
+        translateY(-1px);
 }
 
 .renew-user-avatar {
-    width: 37px;
-    height: 37px;
+
+    width: 39px;
+    height: 39px;
 
     display: flex;
     align-items: center;
@@ -288,15 +834,37 @@
 
     border-radius: 50%;
 
-    background: #24483f;
+    background:
+        linear-gradient(
+            135deg,
+            var(--renew-primary),
+            var(--renew-primary-light)
+        );
 
-    color: #ffffff;
+    color: #FFFFFF;
 
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 800;
+
+    box-shadow:
+        0 7px 18px rgba(37, 137, 165, 0.24);
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.renew-user:hover .renew-user-avatar {
+
+    transform:
+        scale(1.08);
+
+    box-shadow:
+        0 10px 24px rgba(37, 137, 165, 0.34);
 }
 
 .renew-user-info {
+
     display: flex;
     flex-direction: column;
 
@@ -304,370 +872,844 @@
 }
 
 .renew-user-info strong {
-    color: #40524b;
 
-    font-size: 11px;
+    color:
+        var(--renew-text);
+
+    font-size: 13px;
 }
 
 .renew-user-info span {
-    color: #9aa39f;
 
-    font-size: 9px;
-}
-
-
-/* =====================================================
-   MAIN
-===================================================== */
-
-.renew-main {
-    max-width: 1370px;
-
-    margin: auto;
-
-    padding: 30px 42px 55px;
-}
-
-
-/* =====================================================
-   BREADCRUMB
-===================================================== */
-
-.renew-breadcrumb {
-    display: flex;
-    align-items: center;
-
-    gap: 8px;
-
-    margin-bottom: 25px;
-
-    font-size: 9px;
-}
-
-.renew-breadcrumb a {
-    color: #789187;
-
-    text-decoration: none;
-}
-
-.renew-breadcrumb span {
-    color: #bdc5c1;
-}
-
-.renew-breadcrumb strong {
-    color: #465b53;
-}
-
-
-/* =====================================================
-   HEADER
-===================================================== */
-
-.renew-page-header {
-    margin-bottom: 25px;
-}
-
-.renew-page-header > div > span {
-    color: #87a295;
-
-    font-size: 8px;
-    font-weight: 800;
-
-    letter-spacing: 1.4px;
-}
-
-.renew-page-header h2 {
-    margin: 7px 0 6px;
-
-    color: #263f38;
-
-    font-size: 27px;
-    font-weight: 800;
-}
-
-.renew-page-header p {
-    margin: 0;
-
-    color: #8b9691;
+    color:
+        var(--renew-text-muted);
 
     font-size: 11px;
 }
 
 
-/* =====================================================
-   LAYOUT
-===================================================== */
+/* ============================================================
+   MAIN
+   ============================================================ */
 
-.renew-layout {
-    display: grid;
+.renew-main {
 
-    grid-template-columns:
-        minmax(0, 1.4fr)
-        minmax(300px, .75fr);
-
-    gap: 20px;
-
-    align-items: start;
-}
-
-
-/* =====================================================
-   PLAN CARD
-===================================================== */
-
-.renew-plans-card {
-    padding: 25px;
-
-    border-radius: 14px;
-
-    background: #ffffff;
-
-    border: 1px solid #e4ebe7;
-}
-
-.renew-card-heading {
-    margin-bottom: 18px;
-}
-
-.renew-card-heading span {
-    color: #87a295;
-
-    font-size: 8px;
-    font-weight: 800;
-
-    letter-spacing: 1.3px;
-}
-
-.renew-card-heading h3 {
-    margin: 6px 0 0;
-
-    color: #3d534a;
-
-    font-size: 17px;
-}
-
-
-/* =====================================================
-   PLAN OPTIONS
-===================================================== */
-
-.renew-plan {
     width: 100%;
+
+    max-width: 1370px;
+
+    margin: 0 auto;
+
+    padding:
+        28px 42px 50px;
+
+    flex: 1;
+}
+
+
+/* ============================================================
+   BREADCRUMB
+   ============================================================ */
+
+.renew-breadcrumb {
 
     display: flex;
     align-items: center;
 
-    gap: 13px;
+    gap: 9px;
 
-    margin-bottom: 11px;
+    margin-bottom: 19px;
 
-    padding: 17px;
+    color:
+        var(--renew-text-muted);
 
-    border: 1px solid #e4ebe7;
+    font-size: 12px;
 
-    border-radius: 11px;
-
-    background: #ffffff;
-
-    text-align: left;
-
-    cursor: pointer;
-
-    transition: .2s;
+    animation:
+        renewFadeUp 0.5s ease both;
 }
 
-.renew-plan:hover {
-    border-color: #aabfb5;
+.renew-breadcrumb a {
 
-    background: #fbfdfc;
+    color:
+        var(--renew-text-light);
+
+    font-weight: 600;
+
+    transition:
+        color 0.2s ease;
 }
 
-.renew-plan.selected {
-    border-color: #24483f;
+.renew-breadcrumb a:hover {
 
-    background: #f1f7f3;
+    color:
+        var(--renew-primary);
+}
+
+.renew-breadcrumb span {
+
+    color:
+        #B1C1C7;
+}
+
+.renew-breadcrumb strong {
+
+    color:
+        var(--renew-primary);
+
+    font-weight: 700;
+}
+
+
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
+
+.renew-page-header {
+
+    position: relative;
+
+    overflow: hidden;
+
+    min-height: 155px;
+
+    display: flex;
+    align-items: center;
+
+    padding:
+        30px 36px;
+
+    margin-bottom: 20px;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            120deg,
+            #176B87 0%,
+            #2589A5 52%,
+            #3BA7B8 100%
+        );
 
     box-shadow:
-        0 0 0 1px rgba(36,72,63,.05);
+        0 17px 38px rgba(23, 107, 135, 0.17);
+
+    animation:
+        renewFadeUp 0.7s ease 0.1s both;
 }
 
-.renew-radio {
-    width: 19px;
-    height: 19px;
+.renew-page-header::before {
 
-    flex-shrink: 0;
+    content: "";
+
+    position: absolute;
+
+    width: 290px;
+    height: 290px;
+
+    right: -80px;
+    top: -160px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.075);
+}
+
+.renew-page-header::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    left: -80px;
+    bottom: -120px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.045);
+}
+
+.renew-page-header > div {
+
+    position: relative;
+
+    z-index: 2;
+}
+
+.renew-page-header span {
+
+    color:
+        rgba(255, 255, 255, 0.72);
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+
+    text-transform: uppercase;
+}
+
+.renew-page-header h2 {
+
+    margin:
+        8px 0 7px;
+
+    color: #FFFFFF;
+
+    font-size: 29px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.6px;
+}
+
+.renew-page-header p {
+
+    max-width: 650px;
+
+    margin: 0;
+
+    color:
+        rgba(255, 255, 255, 0.80);
+
+    font-size: 13px;
+
+    line-height: 1.65;
+}
+
+
+/* ============================================================
+   NOTICE
+   ============================================================ */
+
+.renew-notice {
+
+    display: flex;
+    align-items: flex-start;
+
+    gap: 13px;
+
+    padding:
+        17px 19px;
+
+    margin-bottom: 20px;
+
+    border:
+        1px solid var(--renew-border);
+
+    border-radius:
+        var(--renew-radius);
+
+    background:
+        #FFFFFF;
+
+    box-shadow:
+        var(--renew-shadow);
+
+    animation:
+        renewFadeUp 0.6s ease 0.2s both;
+}
+
+.renew-notice-icon {
+
+    width: 38px;
+    height: 38px;
+
+    min-width: 38px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    border: 2px solid #b9c5bf;
+    border-radius: 10px;
+
+    background:
+        var(--renew-background-soft);
+
+    color:
+        var(--renew-primary);
+
+    font-size: 17px;
+
+    border:
+        1px solid var(--renew-border-light);
+}
+
+.renew-notice > div:last-child {
+
+    flex: 1;
+}
+
+.renew-notice strong {
+
+    display: block;
+
+    margin-bottom: 4px;
+
+    color:
+        var(--renew-text);
+
+    font-size: 13px;
+
+    font-weight: 800;
+}
+
+.renew-notice p {
+
+    margin: 0;
+
+    color:
+        var(--renew-text-light);
+
+    font-size: 12px;
+
+    line-height: 1.65;
+}
+
+
+/* Success/error notices */
+
+.renew-notice:has(.renew-notice-icon) {
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.renew-notice:hover {
+
+    box-shadow:
+        0 12px 30px rgba(41, 70, 83, 0.08);
+}
+
+
+/* ============================================================
+   RENEWAL LAYOUT
+   ============================================================ */
+
+.renew-layout {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.65fr)
+        minmax(320px, 0.9fr);
+
+    gap: 22px;
+
+    align-items: start;
+
+    margin-bottom: 22px;
+}
+
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+
+.renew-plans-card,
+.renew-summary-card {
+
+    background:
+        var(--renew-card);
+
+    border:
+        1px solid var(--renew-border);
+
+    border-radius:
+        var(--renew-radius);
+
+    box-shadow:
+        var(--renew-shadow);
+}
+
+
+/* ============================================================
+   PLANS CARD
+   ============================================================ */
+
+.renew-plans-card {
+
+    padding: 25px;
+
+    animation:
+        renewSlideLeft 0.7s ease 0.25s both;
+}
+
+.renew-card-heading {
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 19px;
+
+    padding-bottom: 17px;
+
+    border-bottom:
+        1px solid var(--renew-border-light);
+}
+
+.renew-card-heading span {
+
+    color:
+        var(--renew-primary);
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.3px;
+
+    text-transform: uppercase;
+}
+
+.renew-card-heading h3 {
+
+    margin:
+        5px 0 0;
+
+    color:
+        var(--renew-text);
+
+    font-size: 20px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.3px;
+}
+
+
+/* ============================================================
+   MEMBERSHIP PLAN
+   ============================================================ */
+
+.renew-plan {
+
+    width: 100%;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+
+    padding:
+        17px 18px;
+
+    margin-bottom: 11px;
+
+    border:
+        1px solid var(--renew-border);
+
+    border-radius:
+        12px;
+
+    background:
+        #FFFFFF;
+
+    color:
+        var(--renew-text);
+
+    cursor: pointer;
+
+    text-align: left;
+
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.renew-plan:last-of-type {
+
+    margin-bottom: 0;
+}
+
+.renew-plan:hover {
+
+    transform:
+        translateY(-2px);
+
+    border-color:
+        #A9D4DC;
+
+    background:
+        #FBFEFE;
+
+    box-shadow:
+        0 9px 23px rgba(41, 70, 83, 0.07);
+}
+
+.renew-plan.selected {
+
+    border:
+        1.5px solid var(--renew-primary);
+
+    background:
+        linear-gradient(
+            135deg,
+            #F1FAFB,
+            #FFFFFF
+        );
+
+    box-shadow:
+        0 9px 25px rgba(37, 137, 165, 0.11);
+}
+
+.renew-plan.selected::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+
+    width: 4px;
+
+    border-radius:
+        0 5px 5px 0;
+
+    background:
+        var(--renew-primary);
+}
+
+
+/* ============================================================
+   RADIO
+   ============================================================ */
+
+.renew-radio {
+
+    width: 20px;
+    height: 20px;
+
+    min-width: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border:
+        2px solid #B9CBD1;
 
     border-radius: 50%;
+
+    background: #FFFFFF;
+
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.renew-plan:hover .renew-radio {
+
+    border-color:
+        var(--renew-primary-light);
 }
 
 .renew-plan.selected .renew-radio {
-    border-color: #24483f;
+
+    border-color:
+        var(--renew-primary);
+
+    box-shadow:
+        0 0 0 4px rgba(37, 137, 165, 0.08);
 }
 
 .renew-radio span {
+
     width: 9px;
     height: 9px;
 
     border-radius: 50%;
 
-    background: #24483f;
+    background:
+        var(--renew-primary);
 }
 
+
+/* ============================================================
+   PLAN INFO
+   ============================================================ */
+
 .renew-plan-info {
+
+    flex: 1;
+
     display: flex;
     flex-direction: column;
 
-    gap: 4px;
+    gap: 5px;
+
+    min-width: 0;
 }
 
 .renew-plan-info strong {
-    color: #42584f;
 
-    font-size: 11px;
+    color:
+        var(--renew-text);
+
+    font-size: 15px;
+
+    font-weight: 800;
 }
 
 .renew-plan-info span {
-    color: #939e99;
 
-    font-size: 8px;
+    color:
+        var(--renew-text-muted);
+
+    font-size: 12px;
+
+    font-weight: 600;
 }
 
+
+/* ============================================================
+   PLAN PRICE
+   ============================================================ */
+
 .renew-plan-price {
-    margin-left: auto;
 
     display: flex;
     flex-direction: column;
 
     align-items: flex-end;
 
-    gap: 3px;
+    gap: 4px;
+
+    padding-left: 15px;
 }
 
 .renew-plan-price strong {
-    color: #294a40;
 
-    font-size: 15px;
+    color:
+        var(--renew-primary-dark);
+
+    font-size: 18px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
 }
 
 .renew-plan-price span {
-    color: #99a39f;
 
-    font-size: 8px;
+    color:
+        var(--renew-text-muted);
+
+    font-size: 10px;
+
+    font-weight: 600;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.6px;
 }
 
 
-/* =====================================================
+/* ============================================================
    BENEFITS
-===================================================== */
+   ============================================================ */
 
 .renew-benefits {
-    margin-top: 23px;
 
-    padding-top: 21px;
+    margin-top: 22px;
 
-    border-top: 1px solid #e9eeeb;
+    padding:
+        18px;
+
+    border-radius:
+        12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #F5FBFC,
+            #EDF7F9
+        );
+
+    border:
+        1px solid var(--renew-border-light);
 }
 
 .renew-benefits > span {
-    color: #8b9992;
 
-    font-size: 7px;
+    display: block;
+
+    margin-bottom: 11px;
+
+    color:
+        var(--renew-primary-dark);
+
+    font-size: 10px;
+
     font-weight: 800;
 
     letter-spacing: 1.2px;
+
+    text-transform: uppercase;
 }
 
 .renew-benefits > div {
+
     display: grid;
 
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
-    gap: 10px;
-
-    margin-top: 12px;
+    gap:
+        8px 18px;
 }
 
 .renew-benefits p {
+
     margin: 0;
 
-    color: #66766f;
+    color:
+        var(--renew-text-light);
 
-    font-size: 9px;
+    font-size: 12px;
+
+    line-height: 1.5;
+
+    font-weight: 600;
+}
+
+.renew-benefits p::first-letter {
+
+    color:
+        var(--renew-success);
 }
 
 
-/* =====================================================
-   SUMMARY
-===================================================== */
+/* ============================================================
+   SUMMARY CARD
+   ============================================================ */
 
 .renew-summary-card {
-    padding: 25px;
 
-    border-radius: 14px;
+    position: sticky;
 
-    background: #ffffff;
+    top: 105px;
 
-    border: 1px solid #e4ebe7;
+    padding:
+        24px;
 
-    box-shadow:
-        0 10px 25px rgba(36,72,63,.04);
+    animation:
+        renewSlideRight 0.7s ease 0.3s both;
+}
+
+.renew-summary-header {
+
+    padding-bottom:
+        17px;
+
+    border-bottom:
+        1px solid var(--renew-border-light);
+
+    margin-bottom:
+        17px;
 }
 
 .renew-summary-header span {
-    color: #87a295;
 
-    font-size: 8px;
+    color:
+        var(--renew-primary);
+
+    font-size: 10px;
+
     font-weight: 800;
 
     letter-spacing: 1.3px;
+
+    text-transform: uppercase;
 }
 
 .renew-summary-header h3 {
-    margin: 6px 0 20px;
 
-    color: #3d534a;
+    margin:
+        5px 0 0;
 
-    font-size: 17px;
+    color:
+        var(--renew-text);
+
+    font-size: 19px;
+
+    font-weight: 800;
 }
 
 
-/* MEMBERSHIP */
+/* ============================================================
+   SUMMARY MEMBERSHIP
+   ============================================================ */
 
 .renew-summary-membership {
+
     display: flex;
     align-items: center;
 
     gap: 12px;
 
-    padding: 14px;
+    padding:
+        14px;
 
-    border-radius: 10px;
+    margin-bottom:
+        18px;
 
-    background: #f4f8f5;
+    border-radius:
+        11px;
+
+    background:
+        var(--renew-background-soft);
+
+    border:
+        1px solid var(--renew-border-light);
 }
 
 .renew-summary-icon {
-    width: 38px;
-    height: 38px;
+
+    width: 40px;
+    height: 40px;
+
+    min-width: 40px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    border-radius: 9px;
+    border-radius:
+        11px;
 
-    background: #e4eee8;
+    background:
+        linear-gradient(
+            135deg,
+            var(--renew-primary),
+            var(--renew-primary-light)
+        );
+
+    color:
+        #FFFFFF;
 
     font-size: 17px;
+
+    box-shadow:
+        0 7px 16px rgba(37, 137, 165, 0.18);
 }
 
-.renew-summary-membership div:last-child {
+.renew-summary-membership > div:last-child {
+
     display: flex;
     flex-direction: column;
 
@@ -675,372 +1717,757 @@
 }
 
 .renew-summary-membership strong {
-    color: #42584f;
 
-    font-size: 10px;
-}
+    color:
+        var(--renew-text);
 
-.renew-summary-membership span {
-    color: #8f9a95;
+    font-size: 13px;
 
-    font-size: 8px;
-}
-
-
-/* DETAILS */
-
-.renew-summary-details {
-    display: flex;
-    flex-direction: column;
-
-    gap: 15px;
-
-    margin-top: 21px;
-}
-
-.renew-summary-details div {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.renew-summary-details span {
-    color: #919b96;
-
-    font-size: 9px;
-}
-
-.renew-summary-details strong {
-    color: #52665e;
-
-    font-size: 9px;
-}
-
-.renew-summary-divider {
-    height: 1px;
-
-    margin: 20px 0;
-
-    background: #e8edeb;
-}
-
-
-/* TOTAL */
-
-.renew-total {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    margin-bottom: 18px;
-}
-
-.renew-total span {
-    color: #6d7d76;
-
-    font-size: 10px;
-    font-weight: 600;
-}
-
-.renew-total strong {
-    color: #24483f;
-
-    font-size: 22px;
     font-weight: 800;
 }
 
+.renew-summary-membership span {
 
-/* PAYMENT BUTTON */
+    color:
+        var(--renew-text-muted);
 
-.renew-payment-button {
-    width: 100%;
+    font-size: 11px;
 
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    padding: 13px 15px;
-
-    border: none;
-
-    border-radius: 8px;
-
-    background: #24483f;
-
-    color: #ffffff;
-
-    font-size: 9px;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    transition: .25s;
-}
-
-.renew-payment-button:hover {
-    background: #18372f;
-
-    transform: translateY(-2px);
-}
-
-.renew-payment-button span {
-    font-size: 14px;
-}
-
-
-/* BACK */
-
-.renew-cancel {
-    display: block;
-
-    margin-top: 13px;
-
-    color: #82908a;
-
-    text-align: center;
-
-    text-decoration: none;
-
-    font-size: 8px;
     font-weight: 600;
 }
 
-.renew-cancel:hover {
-    color: #24483f;
-}
 
+/* ============================================================
+   SUMMARY DETAILS
+   ============================================================ */
 
-/* SECURE */
+.renew-summary-details {
 
-.renew-secure {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 6px;
-
-    margin-top: 20px;
-}
-
-.renew-secure span {
-    font-size: 10px;
-}
-
-.renew-secure p {
-    margin: 0;
-
-    color: #a0aaa5;
-
-    font-size: 7px;
-}
-
-
-/* =====================================================
-   NOTICE
-===================================================== */
-
-.renew-notice {
-    display: flex;
-    align-items: flex-start;
-
-    gap: 12px;
-
-    margin-top: 20px;
-
-    padding: 17px 19px;
-
-    border-radius: 11px;
-
-    background: #f6f9f7;
-
-    border: 1px solid #e5ede8;
-}
-
-.renew-notice-icon {
-    width: 32px;
-    height: 32px;
-
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 8px;
-
-    background: #e8f2ec;
-
-    font-size: 14px;
-}
-
-.renew-notice div:last-child {
     display: flex;
     flex-direction: column;
 
-    gap: 5px;
+    gap: 14px;
 }
 
-.renew-notice strong {
-    color: #50665c;
+.renew-summary-details > div {
 
-    font-size: 10px;
-}
-
-.renew-notice p {
-    margin: 0;
-
-    color: #8d9893;
-
-    font-size: 8px;
-
-    line-height: 1.6;
-}
-
-
-/* =====================================================
-   FOOTER
-===================================================== */
-
-.renew-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    padding: 21px 42px;
-
-    background: #ffffff;
-
-    border-top: 1px solid #e5ebe8;
+    gap: 20px;
 }
 
-.renew-footer div {
+.renew-summary-details span {
+
+    color:
+        var(--renew-text-muted);
+
+    font-size: 11px;
+
+    font-weight: 600;
+}
+
+.renew-summary-details strong {
+
+    color:
+        var(--renew-text);
+
+    font-size: 12px;
+
+    font-weight: 750;
+
+    text-align: right;
+}
+
+
+/* ============================================================
+   SUMMARY DIVIDER
+   ============================================================ */
+
+.renew-summary-divider {
+
+    height: 1px;
+
+    margin:
+        19px 0;
+
+    background:
+        var(--renew-border-light);
+}
+
+
+/* ============================================================
+   TOTAL
+   ============================================================ */
+
+.renew-total {
+
     display: flex;
     align-items: center;
+    justify-content: space-between;
 
-    gap: 15px;
+    margin-bottom:
+        18px;
+}
+
+.renew-total span {
+
+    color:
+        var(--renew-text-light);
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+.renew-total strong {
+
+    color:
+        var(--renew-primary-dark);
+
+    font-size: 25px;
+
+    font-weight: 850;
+
+    letter-spacing: -0.5px;
+}
+
+
+/* ============================================================
+   PAYMENT BUTTON
+   ============================================================ */
+
+.renew-payment-button {
+
+    width: 100%;
+
+    min-height: 49px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding:
+        0 17px;
+
+    border-radius:
+        10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #176B87,
+            #2589A5 55%,
+            #3BA7B8
+        );
+
+    color:
+        #FFFFFF;
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 22px rgba(37, 137, 165, 0.22);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        filter 0.25s ease;
+}
+
+.renew-payment-button span {
+
+    font-size: 19px;
+
+    transition:
+        transform 0.25s ease;
+}
+
+.renew-payment-button:hover:not(:disabled) {
+
+    transform:
+        translateY(-3px);
+
+    box-shadow:
+        0 13px 30px rgba(37, 137, 165, 0.30);
+
+    filter:
+        brightness(1.03);
+}
+
+.renew-payment-button:hover:not(:disabled) span {
+
+    transform:
+        translateX(4px);
+}
+
+.renew-payment-button:active:not(:disabled) {
+
+    transform:
+        translateY(-1px);
+}
+
+.renew-payment-button:disabled {
+
+    cursor: not-allowed;
+
+    opacity: 0.55;
+
+    box-shadow:
+        none;
+}
+
+
+/* ============================================================
+   CANCEL / BACK LINK
+   ============================================================ */
+
+.renew-cancel {
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top:
+        14px;
+
+    padding:
+        10px;
+
+    color:
+        var(--renew-text-light);
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    border-radius:
+        8px;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease;
+}
+
+.renew-cancel:hover {
+
+    color:
+        var(--renew-primary);
+
+    background:
+        var(--renew-background-soft);
+}
+
+
+/* ============================================================
+   SECURE PAYMENT
+   ============================================================ */
+
+.renew-secure {
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    margin-top:
+        13px;
+
+    padding-top:
+        13px;
+
+    border-top:
+        1px solid var(--renew-border-light);
+}
+
+.renew-secure span {
+
+    font-size: 12px;
+}
+
+.renew-secure p {
+
+    margin: 0;
+
+    color:
+        var(--renew-text-muted);
+
+    font-size: 10px;
+
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+.renew-empty {
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 150px;
+
+    padding:
+        25px;
+
+    text-align: center;
+
+    border:
+        1px dashed var(--renew-border);
+
+    border-radius:
+        12px;
+
+    background:
+        #FBFDFD;
+}
+
+.renew-empty strong {
+
+    margin-bottom: 6px;
+
+    color:
+        var(--renew-text);
+
+    font-size: 14px;
+
+    font-weight: 800;
+}
+
+.renew-empty span {
+
+    color:
+        var(--renew-text-muted);
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+
+.renew-loading {
+
+    min-height:
+        calc(100vh - 82px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color:
+        var(--renew-primary);
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+.renew-loading::before {
+
+    content: "";
+
+    width: 18px;
+    height: 18px;
+
+    margin-right: 10px;
+
+    border:
+        2px solid var(--renew-border);
+
+    border-top-color:
+        var(--renew-primary);
+
+    border-radius: 50%;
+
+    animation:
+        renewSpin 0.8s linear infinite;
+}
+
+@keyframes renewSpin {
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.renew-footer {
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding:
+        22px 42px;
+
+    margin-top: auto;
+
+    border-top:
+        1px solid var(--renew-border);
+
+    background:
+        rgba(255, 255, 255, 0.75);
+}
+
+.renew-footer > div {
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
 }
 
 .renew-footer strong {
-    color: #315247;
 
-    font-size: 11px;
+    color:
+        var(--renew-primary-dark);
+
+    font-size: 13px;
+
+    font-weight: 800;
 }
 
 .renew-footer span {
-    color: #9aa39f;
 
-    font-size: 8px;
+    color:
+        var(--renew-text-muted);
+
+    font-size: 10px;
+
+    line-height: 1.5;
 }
 
 
-/* =====================================================
-   TABLET
-===================================================== */
+/* ============================================================
+   RESPONSIVE - TABLET
+   ============================================================ */
 
-@media (max-width: 1050px) {
+@media (max-width: 1100px) {
 
     .renew-sidebar {
-        width: 210px;
+
+        width: 220px;
     }
 
     .renew-content {
-        width: calc(100% - 210px);
 
-        margin-left: 210px;
+        width:
+            calc(100% - 220px);
+
+        margin-left:
+            220px;
     }
 
     .renew-main {
-        padding-left: 25px;
-        padding-right: 25px;
+
+        padding:
+            25px 28px 45px;
+    }
+
+    .renew-topbar {
+
+        padding:
+            0 28px;
     }
 
     .renew-layout {
-        grid-template-columns: 1fr;
+
+        grid-template-columns:
+            1fr;
     }
 
+    .renew-summary-card {
+
+        position: relative;
+
+        top: auto;
+    }
+
+    .renew-footer {
+
+        padding:
+            20px 28px;
+    }
 }
 
 
-/* =====================================================
-   SMALL TABLET
-===================================================== */
+/* ============================================================
+   RESPONSIVE - MOBILE
+   ============================================================ */
 
-@media (max-width: 850px) {
+@media (max-width: 760px) {
 
     .renew-sidebar {
-        display: none;
+
+        position: relative;
+
+        width: 100%;
+        height: auto;
+
+        min-height: auto;
+
+        padding:
+            18px;
+
+        border-right: 0;
+
+        box-shadow:
+            0 5px 20px rgba(23, 107, 135, 0.15);
+    }
+
+    .renew-sidebar-logo {
+
+        padding:
+            3px 7px 17px;
+    }
+
+    .renew-menu-title {
+
+        padding:
+            12px 8px 7px;
+    }
+
+    .renew-sidebar-nav {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .renew-sidebar-nav a {
+
+        padding:
+            11px 10px;
+
+        font-size: 12px;
+    }
+
+    .renew-sidebar-bottom {
+
+        margin-top:
+            15px;
     }
 
     .renew-content {
+
         width: 100%;
 
         margin-left: 0;
     }
 
     .renew-topbar {
-        padding: 0 22px;
+
+        height: auto;
+
+        min-height: 75px;
+
+        padding:
+            14px 18px;
     }
 
-    .renew-main {
-        padding: 25px 22px 45px;
-    }
+    .renew-topbar h1 {
 
-}
-
-
-/* =====================================================
-   MOBILE
-===================================================== */
-
-@media (max-width: 600px) {
-
-    .renew-topbar {
-        height: 70px;
+        font-size: 18px;
     }
 
     .renew-user-info {
+
         display: none;
     }
 
     .renew-main {
-        padding: 20px 15px 40px;
+
+        padding:
+            20px 16px 35px;
+    }
+
+    .renew-page-header {
+
+        min-height: auto;
+
+        padding:
+            25px 24px;
     }
 
     .renew-page-header h2 {
-        font-size: 22px;
+
+        font-size: 24px;
+    }
+
+    .renew-page-header p {
+
+        font-size: 12px;
     }
 
     .renew-plans-card,
     .renew-summary-card {
-        padding: 19px;
+
+        padding:
+            18px;
     }
 
     .renew-plan {
-        padding: 14px;
+
+        gap: 10px;
+
+        padding:
+            14px;
     }
 
     .renew-plan-price strong {
-        font-size: 13px;
+
+        font-size: 16px;
     }
 
     .renew-benefits > div {
-        grid-template-columns: 1fr;
+
+        grid-template-columns:
+            1fr;
     }
 
     .renew-footer {
+
         flex-direction: column;
 
-        gap: 8px;
+        align-items: flex-start;
 
-        padding: 20px;
+        padding:
+            20px 18px;
+    }
+}
 
-        text-align: center;
+
+/* ============================================================
+   RESPONSIVE - SMALL MOBILE
+   ============================================================ */
+
+@media (max-width: 450px) {
+
+    .renew-sidebar-nav {
+
+        grid-template-columns:
+            1fr;
     }
 
-    .renew-footer div {
-        flex-direction: column;
+    .renew-topbar {
 
-        gap: 5px;
+        align-items: flex-start;
     }
 
+    .renew-user-avatar {
+
+        width: 34px;
+        height: 34px;
+    }
+
+    .renew-breadcrumb {
+
+        font-size: 10px;
+    }
+
+    .renew-page-header {
+
+        padding:
+            22px 19px;
+    }
+
+    .renew-page-header h2 {
+
+        font-size: 21px;
+    }
+
+    .renew-notice {
+
+        padding:
+            14px;
+    }
+
+    .renew-notice-icon {
+
+        width: 34px;
+        height: 34px;
+
+        min-width: 34px;
+    }
+
+    .renew-card-heading h3 {
+
+        font-size: 18px;
+    }
+
+    .renew-plan {
+
+        align-items: flex-start;
+    }
+
+    .renew-plan-info strong {
+
+        font-size: 13px;
+    }
+
+    .renew-plan-info span {
+
+        font-size: 10px;
+    }
+
+    .renew-plan-price strong {
+
+        font-size: 15px;
+    }
+
+    .renew-summary-details > div {
+
+        gap: 10px;
+    }
+
+    .renew-summary-details strong {
+
+        max-width: 130px;
+    }
+
+    .renew-total strong {
+
+        font-size: 22px;
+    }
+}
+
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .renew-page *,
+    .renew-page *::before,
+    .renew-page *::after {
+
+        animation-duration: 0.01ms !important;
+
+        animation-iteration-count: 1 !important;
+
+        transition-duration: 0.01ms !important;
+    }
 }
